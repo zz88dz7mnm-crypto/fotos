@@ -1,395 +1,659 @@
-<!-- muro -->
-<title>Muro Golden Coast</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=JetBrains+Mono:wght@400;500&display=swap">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Practicá — Física I</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <style>
   :root{
-    --void:#0d0f0e;
-    --sand:#e9e4da;
-    --card:#fbf9f5;
-    --ink:#2a2e2b;
-    --muted:#7c8177;
-    --line:#cfc8b9;
-    --sol:#c07a1e;
-    --sol-soft:rgba(217,143,43,.14);
-    --display:"Bricolage Grotesque",system-ui,sans-serif;
-    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    --bg:#0f1115;
+    --panel:#171a21;
+    --panel2:#1d212a;
+    --border:#2a2f3a;
+    --text:#e8eaed;
+    --muted:#9aa3b2;
+    --accent:#5eb3ff;
+    --accent2:#7dd3a0;
+    --bad:#e8767a;
+    --tag-bg:#25344a;
+    --tag-text:#8fc4ff;
+    --var-bg:#3a2f1f;
+    --var-text:#e8c07a;
   }
-  @media (prefers-color-scheme: dark){
-    :root:not([data-theme="light"]){
-      --sand:#1a1d1b; --card:#282c29; --ink:#e8e4da;
-      --muted:#949a8e; --line:#3a403b;
-      --sol:#e5a84e; --sol-soft:rgba(229,168,78,.16);
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#f5f6f8;
+      --panel:#ffffff;
+      --panel2:#f0f2f5;
+      --border:#e0e3e8;
+      --text:#1b1f27;
+      --muted:#5b6472;
+      --accent:#1a6fd1;
+      --accent2:#1f8a5c;
+      --bad:#c23b3f;
+      --tag-bg:#e6f0fd;
+      --tag-text:#1a6fd1;
+      --var-bg:#fdf1de;
+      --var-text:#9a6a13;
     }
   }
-  :root[data-theme="dark"]{
-    --sand:#1a1d1b; --card:#282c29; --ink:#e8e4da;
-    --muted:#949a8e; --line:#3a403b;
-    --sol:#e5a84e; --sol-soft:rgba(229,168,78,.16);
-  }
-
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--void);color:var(--ink);font-family:var(--mono)}
-
-  /* ============================================================
-     EL MURO — nada más que fotos, de un costado al otro
-     ============================================================ */
-  /* cada foto entera, con su proporcion intacta y sin recortes.
-     Las filas se llenan hasta donde entra: si sobra un pedazo a la
-     derecha, se deja — antes que cortar una foto */
-  #wall{
-    display:flex;
-    flex-wrap:wrap;
-    line-height:0;           /* mata el hueco de línea base entre imágenes */
-  }
-  #wall img{
-    display:block;
-    height:clamp(150px,17vw,260px);
-    width:auto;
-    flex:0 0 auto;           /* sin estirar: cada foto entera, con su proporcion */
+  *{box-sizing:border-box;}
+  body{
     margin:0;
-    border:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;
+    min-height:100vh;
   }
-  @media (max-width:640px){ #wall img{height:clamp(120px,28vw,190px)} }
+  header{
+    padding:28px 20px 16px;
+    max-width:760px;
+    margin:0 auto;
+    text-align:center;
+  }
+  header h1{
+    font-size:1.5rem;
+    margin:0 0 6px;
+    letter-spacing:-0.01em;
+  }
+  header p{
+    color:var(--muted);
+    margin:0;
+    font-size:0.9rem;
+  }
+  main{
+    max-width:760px;
+    margin:0 auto;
+    padding:8px 20px 80px;
+  }
 
-  /* el muro ocupa todo; la carga vive aparte */
-  body[data-mode="muro"]  #uploader{display:none}
-  body[data-mode="carga"] #wall{display:none}
-  body[data-mode="carga"] #vacio{display:none}
+  /* --- tabs --- */
+  .tabs{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    justify-content:center;
+    margin:18px 0;
+  }
+  .tab-btn{
+    background:var(--panel2);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:8px 14px;
+    border-radius:999px;
+    font-size:0.82rem;
+    cursor:pointer;
+    font-weight:600;
+  }
+  .tab-btn.active{
+    background:var(--accent);
+    color:#fff;
+    border-color:var(--accent);
+  }
 
-  #vacio{
-    min-height:100vh;display:grid;place-items:center;
-    font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#4a4f4b;
+  /* --- unit filter --- */
+  .unit-filter{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    justify-content:center;
+    margin-bottom:20px;
   }
-  #vacio[hidden]{display:none}
+  .chip{
+    background:var(--panel);
+    border:1px solid var(--border);
+    color:var(--muted);
+    padding:5px 11px;
+    border-radius:999px;
+    font-size:0.74rem;
+    cursor:pointer;
+  }
+  .chip.active{
+    background:var(--tag-bg);
+    color:var(--tag-text);
+    border-color:var(--tag-text);
+  }
 
-  /* ============================================================
-     LA CARGA — la otra página
-     ============================================================ */
-  #uploader{
-    min-height:100vh;display:grid;place-items:center;
-    background:var(--sand);padding:40px 24px;
+  /* --- stats bar --- */
+  .stats{
+    display:flex;
+    justify-content:center;
+    gap:22px;
+    margin-bottom:18px;
+    font-size:0.8rem;
+    color:var(--muted);
+    flex-wrap:wrap;
   }
-  .box{width:min(560px,100%);text-align:center}
-  .eyebrow{
-    font-size:11px;letter-spacing:.22em;text-transform:uppercase;
-    color:var(--muted);margin:0 0 22px;
-  }
-  h1{
-    font-family:var(--display);font-size:clamp(30px,5vw,46px);
-    font-weight:800;letter-spacing:-.03em;line-height:1.02;
-    margin:0 0 16px;color:var(--ink);text-wrap:balance;
-  }
-  .lede{
-    font-family:var(--display);font-weight:400;font-size:16px;line-height:1.6;
-    color:var(--muted);margin:0 auto 36px;max-width:44ch;
-  }
-  .drop{
-    display:flex;align-items:center;justify-content:center;gap:14px;
-    width:100%;cursor:pointer;font:inherit;color:var(--ink);
-    background:transparent;border:1.5px dashed var(--line);border-radius:2px;
-    padding:34px 28px;transition:border-color .2s ease,background .2s ease;
-  }
-  .drop:hover,.drop.over{border-color:var(--sol);background:var(--sol-soft)}
-  .drop:focus-visible{outline:2px solid var(--sol);outline-offset:3px}
-  .drop .dot{
-    width:32px;height:32px;border-radius:50%;flex:none;
-    border:1.5px solid var(--sol);color:var(--sol);
-    display:grid;place-items:center;font-size:17px;line-height:1;
-  }
-  .drop .t{font-family:var(--display);font-size:17px;font-weight:600;letter-spacing:-.01em}
-  input[type=file]{display:none}
+  .stats b{ color:var(--text); }
 
-  .status{
-    font-size:11px;letter-spacing:.16em;text-transform:uppercase;
-    color:var(--sol);min-height:18px;margin:20px 0 0;
+  /* --- card / game area --- */
+  .stage{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:26px 22px;
+    min-height:230px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    gap:16px;
   }
-  .note{font-size:11px;letter-spacing:.08em;color:var(--muted);margin:10px 0 0;line-height:1.9}
-  .note a{color:var(--sol)}
-
-  /* acceso discreto a la carga desde el muro, por si el link con #subir no toma */
-  #toCarga{
-    position:fixed;right:14px;bottom:14px;z-index:10;
-    width:38px;height:38px;border-radius:50%;
-    border:1px solid rgba(233,228,218,.28);background:rgba(13,15,14,.55);
-    color:rgba(233,228,218,.85);font-size:19px;line-height:1;cursor:pointer;
-    opacity:0;transition:opacity .25s ease;backdrop-filter:blur(6px);
+  .prompt-tag{
+    font-size:0.7rem;
+    color:var(--tag-text);
+    background:var(--tag-bg);
+    padding:3px 10px;
+    border-radius:6px;
+    font-weight:600;
   }
-  #toCarga:hover,#toCarga:focus-visible{opacity:1;outline:none}
-  body[data-mode="muro"]:hover #toCarga{opacity:.28}
-  body[data-mode="carga"] #toCarga{display:none}
+  .prompt-name{
+    font-size:1.15rem;
+    font-weight:600;
+    max-width:520px;
+  }
+  .prompt-formula{
+    font-size:1.4rem;
+    overflow-x:auto;
+    max-width:100%;
+    padding:4px 0;
+  }
+  .flip-hint{
+    color:var(--muted);
+    font-size:0.78rem;
+  }
+  .reveal{
+    width:100%;
+    border-top:1px solid var(--border);
+    padding-top:16px;
+    margin-top:4px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+  }
+  .reveal .formula-big{
+    font-size:1.5rem;
+    overflow-x:auto;
+    max-width:100%;
+  }
+  .reveal .note{
+    color:var(--muted);
+    font-size:0.82rem;
+    max-width:520px;
+  }
 
-  @media (prefers-reduced-motion:reduce){ *{transition:none!important} }
+  .btn{
+    border:1px solid var(--border);
+    background:var(--panel2);
+    color:var(--text);
+    padding:10px 18px;
+    border-radius:10px;
+    font-size:0.88rem;
+    cursor:pointer;
+    font-weight:600;
+  }
+  .btn.primary{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+  }
+  .btn.good{
+    background:var(--accent2);
+    border-color:var(--accent2);
+    color:#08251a;
+  }
+  .btn.bad{
+    background:var(--bad);
+    border-color:var(--bad);
+    color:#2b0b0c;
+  }
+  .row{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+
+  /* --- multiple choice --- */
+  .choices{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    width:100%;
+    max-width:560px;
+  }
+  .choice{
+    background:var(--panel2);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px 16px;
+    cursor:pointer;
+    font-size:1.05rem;
+    text-align:left;
+    overflow-x:auto;
+  }
+  .choice:hover{ border-color:var(--accent); }
+  .choice.correct{
+    background:#173a26;
+    border-color:var(--accent2);
+    color:#fff;
+  }
+  .choice.wrong{
+    background:#3a1919;
+    border-color:var(--bad);
+    color:#fff;
+  }
+  .choice.disabled{ pointer-events:none; }
+
+  /* --- type mode --- */
+  .type-input{
+    width:100%;
+    max-width:420px;
+    background:var(--panel2);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:12px 14px;
+    border-radius:10px;
+    font-size:1rem;
+    text-align:center;
+  }
+  .type-hint{
+    color:var(--muted);
+    font-size:0.76rem;
+    max-width:480px;
+  }
+  .feedback{
+    font-weight:700;
+    font-size:0.95rem;
+  }
+  .feedback.good{ color:var(--accent2); }
+  .feedback.bad{ color:var(--bad); }
+
+  footer{
+    max-width:760px;
+    margin:40px auto 0;
+    padding:20px 20px 60px;
+    color:var(--muted);
+    font-size:0.78rem;
+    border-top:1px solid var(--border);
+    text-align:center;
+  }
+  ::selection{background:var(--accent); color:#fff;}
 </style>
+</head>
+<body>
 
-<div id="wall"></div>
+<header>
+  <h1>🧠 Practicá Física I</h1>
+  <p>Jugá con las fórmulas de las Unidades 1 a 4 hasta aprendértelas de memoria.</p>
+</header>
 
-<div id="vacio">el muro está vacío</div>
-
-<artifact-local>
-  <div id="uploader">
-    <div class="box">
-      <p class="eyebrow">Golden Coast</p>
-      <h1>Sumá una foto al muro</h1>
-      <p class="lede">
-        Sale revelada sola con la vibra de siempre y se pega al muro.
-        No hay nada que elegir ni que editar.
-      </p>
-      <button type="button" class="drop" id="drop">
-        <span class="dot" aria-hidden="true">+</span>
-        <span class="t">Elegí una foto o arrastrala acá</span>
-      </button>
-      <input type="file" id="file" accept="image/*" multiple>
-      <p class="status" id="status"></p>
-      <p class="note" id="note"></p>
-    </div>
+<main>
+  <div class="tabs">
+    <button class="tab-btn" data-mode="flash">🃏 Flashcards</button>
+    <button class="tab-btn" data-mode="quiz-formula">🎯 ¿Cuál fórmula?</button>
+    <button class="tab-btn" data-mode="quiz-name">🏷️ ¿Cómo se llama?</button>
+    <button class="tab-btn" data-mode="type">⌨️ Escribila</button>
   </div>
-</artifact-local>
 
-<button type="button" id="toCarga" title="Sumar una foto" aria-label="Sumar una foto">+</button>
+  <div class="unit-filter" id="unitFilter"></div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="stage" id="stage"></div>
+</main>
+
+<footer>
+  Progreso guardado en este navegador. Datos: formulario de Física I (Unidades 1–4).
+  <br><a href="#" id="resetProgress" style="color:var(--muted);">Reiniciar progreso</a>
+</footer>
 
 <script>
-(() => {
-  "use strict";
+/* ======================= DATA ======================= */
+const FORMULAS = [
+  // Unidad 1
+  {id:"u1-1", unit:"U1", name:"Ley de gravitación universal", formula:"F = G \\cdot \\frac{M \\cdot m}{r^2}", note:"Despejando G se obtiene G = F·r² / (M·m).", vars:"F: fuerza · G: constante de gravitación · M, m: masas · r: distancia"},
+  {id:"u1-2", unit:"U1", name:"Equivalencia masa-energía", formula:"E = m \\cdot c^2", note:"Sirve para deducir las dimensiones de la energía (Joule = kg·m²/s²).", vars:"E: energía · m: masa · c: velocidad de la luz"},
+  {id:"u1-3", unit:"U1", name:"Valor promedio de una medición", formula:"\\bar{m} = \\frac{1}{N}\\sum_{i=1}^{N} m_i", note:"", vars:"m̄: promedio · N: cantidad de mediciones · mᵢ: cada medición"},
+  {id:"u1-4", unit:"U1", name:"Desviación estándar", formula:"\\sigma = \\sqrt{\\frac{1}{N-1}\\sum_{i=1}^{N}(m_i-\\bar{m})^2}", note:"", vars:"σ: desviación estándar"},
+  {id:"u1-5", unit:"U1", name:"Incertidumbre del promedio", formula:"\\Delta m = \\frac{\\sigma}{\\sqrt{N}}", note:"Resultado final: m = m̄ ± Δm.", vars:"Δm: incertidumbre del promedio"},
 
-  const $ = id => document.getElementById(id);
-  const wallEl = $("wall"), vacioEl = $("vacio"), dropEl = $("drop"),
-        fileEl = $("file"), statusEl = $("status"), noteEl = $("note"),
-        toCarga = $("toCarga");
+  // Unidad 2
+  {id:"u2-1", unit:"U2", name:"Cantidad de imágenes entre dos espejos", formula:"n_{img} = \\frac{360°}{\\theta} - 1", note:"", vars:"n_img: cantidad de imágenes · θ: ángulo entre espejos"},
+  {id:"u2-2", unit:"U2", name:"Suma de ángulos internos de un triángulo", formula:"\\alpha + \\beta + \\theta = 180°", note:"Usada para hallar el ángulo de salida de un rayo reflejado entre dos espejos.", vars:"α, β, θ: ángulos internos"},
+  {id:"u2-3", unit:"U2", name:"Funciones trigonométricas básicas", formula:"\\text{sen}(\\theta)=\\frac{\\text{op}}{\\text{hip}} \\quad \\cos(\\theta)=\\frac{\\text{ady}}{\\text{hip}} \\quad \\tan(\\theta)=\\frac{\\text{op}}{\\text{ady}}", note:"", vars:"op: opuesto · ady: adyacente · hip: hipotenusa"},
+  {id:"u2-4", unit:"U2", name:"Ecuación de los espejos", formula:"\\frac{1}{p} + \\frac{1}{q} = \\frac{1}{f}", note:"", vars:"p: distancia objeto · q: distancia imagen · f: distancia focal"},
+  {id:"u2-5", unit:"U2", name:"Ecuación del aumento lateral", formula:"M = \\frac{h'}{h} = -\\frac{q}{p}", note:"", vars:"M: aumento · h': altura imagen · h: altura objeto"},
+  {id:"u2-6", unit:"U2", name:"Distancia focal según radio (espejo cóncavo)", formula:"f = \\frac{R}{2}", note:"Base de la variación para el espejo convexo.", vars:"R: radio de curvatura"},
+  {id:"u2-7", unit:"U2", name:"Distancia focal — espejo convexo", formula:"f = -\\frac{R}{2}", note:"Variación de f = R/2, con signo negativo por convención.", vars:""},
+  {id:"u2-8", unit:"U2", name:"Ley de Reflexión", formula:"\\theta_{incidente} = \\theta_{reflejado}", note:"", vars:""},
+  {id:"u2-9", unit:"U2", name:"Ley de Snell (refracción)", formula:"n_1 \\cdot \\text{sen}(\\theta_1) = n_2 \\cdot \\text{sen}(\\theta_2)", note:"", vars:"n₁, n₂: índices de refracción"},
+  {id:"u2-10", unit:"U2", name:"Índice de refracción y velocidad de la luz", formula:"n = \\frac{c}{v}", note:"", vars:"n: índice de refracción · c: vel. de la luz en el vacío · v: vel. en el medio"},
+  {id:"u2-11", unit:"U2", name:"Ángulo crítico (reflexión interna total)", formula:"\\text{sen}(\\theta_c) = \\frac{n_2}{n_1} \\quad (n_1 > n_2)", note:"Es la Ley de Snell en el caso límite en que el rayo refractado sale a 90°.", vars:"θc: ángulo crítico"},
+  {id:"u2-12", unit:"U2", name:"Desviación en lámina de caras paralelas", formula:"d = \\frac{h \\cdot \\text{sen}(\\theta_1-\\theta_2)}{\\cos(\\theta_2)}", note:"", vars:"d: desviación · h: espesor de la lámina"},
 
-  const MAX_EDGE = 1200, QUALITY = 0.74;
-  let shared = null, readOnly = false;
+  // Unidad 3.1
+  {id:"u3-1", unit:"U3", name:"Velocidad media (MRU)", formula:"v = \\frac{\\Delta x}{\\Delta t}", note:"", vars:"v: velocidad · Δx: desplazamiento · Δt: tiempo"},
+  {id:"u3-2", unit:"U3", name:"Aceleración", formula:"a = \\frac{v-v_0}{t}", note:"", vars:"a: aceleración · v₀: velocidad inicial"},
+  {id:"u3-3", unit:"U3", name:"Posición (MRUV)", formula:"x = x_0 + v_0 \\cdot t + \\frac{1}{2}\\cdot a \\cdot t^2", note:"", vars:"x₀: posición inicial"},
+  {id:"u3-4", unit:"U3", name:"Velocidad (MRUV)", formula:"v = v_0 + a \\cdot t", note:"", vars:""},
+  {id:"u3-5", unit:"U3", name:"Desplazamiento (vector)", formula:"\\vec{d} = x_f - x_i", note:"", vars:"x_f, x_i: posición final e inicial"},
+  {id:"u3-6", unit:"U3", name:"Perímetro de una circunferencia", formula:"P = 2 \\cdot \\pi \\cdot r", note:"La distancia recorrida en medio círculo: d = π·r.", vars:"r: radio"},
+  {id:"u3-7", unit:"U3", name:"Componentes de la velocidad inicial (Tiro Oblicuo)", formula:"v_{0x} = v_0 \\cdot \\cos(\\theta) \\qquad v_{0y} = v_0 \\cdot \\text{sen}(\\theta)", note:"", vars:""},
+  {id:"u3-8", unit:"U3", name:"Posición horizontal — Tiro Oblicuo", formula:"x = v_{0x} \\cdot t", note:"Variación de x = x₀ + v₀t (MRU aplicado al eje x, sin aceleración horizontal).", vars:""},
+  {id:"u3-9", unit:"U3", name:"Velocidad vertical — Tiro Oblicuo", formula:"v_y = v_{0y} - g \\cdot t", note:"Variación de v = v₀ + at.", vars:"g: aceleración de la gravedad"},
+  {id:"u3-10", unit:"U3", name:"Posición vertical — Tiro Oblicuo", formula:"y = y_0 + v_{0y}\\cdot t - \\frac{1}{2}\\cdot g \\cdot t^2", note:"Variación de x = x₀ + v₀t + ½at².", vars:""},
+  {id:"u3-11", unit:"U3", name:"Frecuencia", formula:"f = \\frac{\\text{vueltas}}{\\text{tiempo}}", note:"", vars:""},
+  {id:"u3-12", unit:"U3", name:"Velocidad angular", formula:"\\omega = 2 \\cdot \\pi \\cdot f", note:"", vars:"ω: velocidad angular"},
+  {id:"u3-13", unit:"U3", name:"Ángulo girado", formula:"\\theta = \\text{vueltas} \\times 2\\pi", note:"", vars:""},
+  {id:"u3-14", unit:"U3", name:"Arco recorrido", formula:"s = \\theta \\cdot r", note:"Relación ángulo-radio.", vars:"s: arco · r: radio"},
+  {id:"u3-15", unit:"U3", name:"Velocidad tangencial", formula:"v_t = \\omega \\cdot r", note:"", vars:""},
+  {id:"u3-16", unit:"U3", name:"Aceleración centrípeta", formula:"a_c = \\frac{v_t^2}{r} = \\omega^2 \\cdot r", note:"", vars:""},
+  {id:"u3-17", unit:"U3", name:"Velocidad relativa", formula:"v_{A/B} = v_A - v_B", note:"Composición de velocidades.", vars:""},
 
-  /* ---- qué página es esta: el muro o la carga ---- */
-  function modo(){
-    // sirve la ruta (/subir en Vercel), la query (?subir) y el fragmento (#subir)
-    const url = (location.pathname || "") + (location.search || "") + (location.hash || "");
-    return /(^|[\/?#&])(subir|cargar)\b/i.test(url) ? "carga" : "muro";
-  }
-  function aplicarModo(){ document.body.dataset.mode = modo(); }
-  aplicarModo();
-  window.addEventListener("hashchange", aplicarModo);
-  toCarga.addEventListener("click", () => {
-    location.hash = "subir";
-    aplicarModo();
+  // Unidad 4
+  {id:"u4-1", unit:"U4", name:"Segunda Ley de Newton", formula:"F = m \\cdot a", note:"Base de toda la unidad de dinámica.", vars:"F: fuerza neta · m: masa · a: aceleración"},
+  {id:"u4-2", unit:"U4", name:"Peso", formula:"P = m \\cdot g", note:"", vars:"P: peso"},
+  {id:"u4-3", unit:"U4", name:"Componentes del peso en plano inclinado", formula:"P_x = m\\cdot g \\cdot \\text{sen}(\\theta) \\qquad P_y = m \\cdot g \\cdot \\cos(\\theta)", note:"Variación trigonométrica del peso.", vars:""},
+  {id:"u4-4", unit:"U4", name:"Fuerza de rozamiento", formula:"f_r = \\mu \\cdot N", note:"", vars:"μ: coeficiente de rozamiento · N: normal"},
+  {id:"u4-5", unit:"U4", name:"Aceleración en plano inclinado con rozamiento", formula:"a = g \\cdot [\\text{sen}(\\theta) - \\mu \\cdot \\cos(\\theta)]", note:"Combinación de F=ma, Pₓ, P_y y f_r.", vars:""},
+  {id:"u4-6", unit:"U4", name:"Sistema con polea en plano inclinado", formula:"a = \\frac{P_1 - P_{2x}}{m_1+m_2} \\qquad T = P_1 - m_1 \\cdot a", note:"Sale de sumar las ecuaciones de Newton de cada cuerpo (la T se cancela).", vars:"T: tensión"},
+  {id:"u4-7", unit:"U4", name:"Aceleración centrípeta desde el ángulo (péndulo cónico)", formula:"a_c = g \\cdot \\tan(\\theta)", note:"Sale de dividir Tₓ=m·a_c sobre T_y=m·g.", vars:""},
+];
+
+const UNIT_NAMES = {U1:"U1 · Mediciones", U2:"U2 · Óptica", U3:"U3 · Cinemática", U4:"U4 · Dinámica"};
+
+/* ======================= PROGRESO ======================= */
+const STORAGE_KEY = "fisica1_progreso_v1";
+function loadProgress(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  const p = {};
+  FORMULAS.forEach(f => p[f.id] = {seen:0, correct:0, wrong:0, weight:3});
+  return p;
+}
+let progress = loadProgress();
+FORMULAS.forEach(f => { if(!progress[f.id]) progress[f.id] = {seen:0, correct:0, wrong:0, weight:3}; });
+function saveProgress(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); }
+
+/* ======================= ESTADO ======================= */
+let mode = "flash";
+let activeUnits = new Set(["U1","U2","U3","U4"]);
+let current = null;
+
+const stageEl = document.getElementById("stage");
+const statsEl = document.getElementById("stats");
+const unitFilterEl = document.getElementById("unitFilter");
+
+/* ======================= UI: tabs y filtro ======================= */
+document.querySelectorAll(".tab-btn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    mode = btn.dataset.mode;
+    document.querySelectorAll(".tab-btn").forEach(b=>b.classList.toggle("active", b===btn));
+    nextRound();
   });
+});
+document.querySelector('.tab-btn[data-mode="flash"]').classList.add("active");
 
-  /* ============================================================
-     EL FILTRO
-     ============================================================ */
-  const CH = {
-    r:{ lift:0.030, gain:1.000, gamma:1.00 },
-    g:{ lift:0.028, gain:0.994, gamma:1.00 },
-    b:{ lift:0.055, gain:0.968, gamma:0.99 }
-  };
-  const SHOULDER = 0.78, SHOULDER_K = 1.35, CONTRAST = 0.96;
-
-  function buildLUT(c){
-    const lut = new Float32Array(256), norm = 1 - Math.exp(-SHOULDER_K);
-    for (let i = 0; i < 256; i++){
-      let x = Math.pow(i/255, c.gamma);
-      if (x > SHOULDER){
-        const t = (x - SHOULDER)/(1 - SHOULDER);
-        x = SHOULDER + (1 - SHOULDER)*(1 - Math.exp(-SHOULDER_K*t))/norm;
-      }
-      x = (x - 0.5)*CONTRAST + 0.5;
-      x = c.lift + (c.gain - c.lift)*x;
-      lut[i] = x < 0 ? 0 : x > 1 ? 1 : x;
-    }
-    return lut;
-  }
-  const LR = buildLUT(CH.r), LG = buildLUT(CH.g), LB = buildLUT(CH.b);
-
-  function grade(data){
-    const WB_R = 1.012, WB_G = 1.004, WB_B = 0.982;
-    for (let i = 0; i < data.length; i += 4){
-      let r = LR[Math.min(255,(data[i]  *WB_R)|0)];
-      let g = LG[Math.min(255,(data[i+1]*WB_G)|0)];
-      let b = LB[Math.min(255,(data[i+2]*WB_B)|0)];
-      const L = 0.2126*r + 0.7152*g + 0.0722*b;
-      const sw = (1-L)*(1-L), hw = L*L, mw = 4*L*(1-L);
-      r += -0.016*sw + 0.038*hw + 0.009*mw;
-      g +=  0.005*sw + 0.013*hw + 0.003*mw;
-      b +=  0.024*sw - 0.034*hw - 0.007*mw;
-      const sat = (b > r && b > g) ? 0.98 : 0.90;
-      const lum = 0.2126*r + 0.7152*g + 0.0722*b;
-      r = lum + (r-lum)*sat; g = lum + (g-lum)*sat; b = lum + (b-lum)*sat;
-      data[i]   = r < 0 ? 0 : r > 1 ? 255 : r*255;
-      data[i+1] = g < 0 ? 0 : g > 1 ? 255 : g*255;
-      data[i+2] = b < 0 ? 0 : b > 1 ? 255 : b*255;
-    }
-  }
-
-  function halation(ctx, w, h){
-    const src = ctx.getImageData(0,0,w,h), hi = ctx.createImageData(w,h);
-    const s = src.data, d = hi.data;
-    for (let i = 0; i < s.length; i += 4){
-      const lum = (0.2126*s[i] + 0.7152*s[i+1] + 0.0722*s[i+2])/255;
-      const m = lum > 0.74 ? (lum - 0.74)/0.26 : 0;
-      d[i] = 255*m; d[i+1] = 140*m; d[i+2] = 60*m; d[i+3] = 255;
-    }
-    const tmp = document.createElement("canvas");
-    tmp.width = w; tmp.height = h;
-    tmp.getContext("2d").putImageData(hi,0,0);
-    ctx.save();
-    ctx.globalCompositeOperation = "screen";
-    ctx.globalAlpha = 0.20;
-    ctx.filter = `blur(${Math.max(4, Math.round(Math.min(w,h)*0.016))}px)`;
-    ctx.drawImage(tmp,0,0);
-    ctx.restore(); ctx.filter = "none";
-  }
-
-  function sunTint(ctx, w, h){
-    ctx.save();
-    ctx.globalCompositeOperation = "soft-light";
-    const g = ctx.createLinearGradient(0,0,w,h);
-    g.addColorStop(0,"rgba(232,163,61,.24)");
-    g.addColorStop(1,"rgba(193,85,47,.14)");
-    ctx.fillStyle = g; ctx.fillRect(0,0,w,h);
-    ctx.restore();
-  }
-
-  function grainVignette(data, w, h){
-    const cx = w/2, cy = h/2, maxR2 = cx*cx + cy*cy;
-    for (let y = 0; y < h; y++){
-      const dy = y - cy, dy2 = dy*dy;
-      for (let x = 0; x < w; x++){
-        const i = (y*w + x)*4;
-        let r = data[i], g = data[i+1], b = data[i+2];
-        const dx = x - cx, rr = (dx*dx + dy2)/maxR2, v = 1 - 0.13*rr*rr;
-        r *= v; g *= v; b *= v;
-        const lum = (0.2126*r + 0.7152*g + 0.0722*b)/255;
-        const n = (Math.random() - 0.5) * 6.2 * (1 + 1.6*(1 - lum));
-        r += n; g += n; b += n;
-        data[i]   = r < 0 ? 0 : r > 255 ? 255 : r;
-        data[i+1] = g < 0 ? 0 : g > 255 ? 255 : g;
-        data[i+2] = b < 0 ? 0 : b > 255 ? 255 : b;
-      }
-    }
-  }
-
-  async function revelar(file){
-    let bmp;
-    try { bmp = await createImageBitmap(file,{imageOrientation:"from-image"}); }
-    catch {
-      bmp = await new Promise((res,rej)=>{
-        const im = new Image();
-        im.onload = ()=>res(im); im.onerror = rej;
-        im.src = URL.createObjectURL(file);
-      });
-    }
-    const scale = Math.min(1, MAX_EDGE/Math.max(bmp.width,bmp.height));
-    const w = Math.max(1,Math.round(bmp.width*scale));
-    const h = Math.max(1,Math.round(bmp.height*scale));
-    const cv = document.createElement("canvas");
-    cv.width = w; cv.height = h;
-    const ctx = cv.getContext("2d",{willReadFrequently:true});
-    ctx.drawImage(bmp,0,0,w,h);
-
-    let img = ctx.getImageData(0,0,w,h);
-    grade(img.data);
-    ctx.putImageData(img,0,0);
-    halation(ctx,w,h);
-    sunTint(ctx,w,h);
-    img = ctx.getImageData(0,0,w,h);
-    grainVignette(img.data,w,h);
-    ctx.putImageData(img,0,0);
-    return cv.toDataURL("image/jpeg", QUALITY);
-  }
-
-  /* ============================================================
-     PEGAR AL MURO
-     ============================================================ */
-  function nuevaFoto(dataUrl){
-    const img = document.createElement("img");
-    img.src = dataUrl;
-    img.alt = "";
-    img.loading = "lazy";
-    return img;
-  }
-
-  const LS = "goldencoast-muro";
-  const leerLocal = () => { try { return JSON.parse(localStorage.getItem(LS)) || []; } catch { return []; } };
-  function guardarLocal(){
-    try { localStorage.setItem(LS, JSON.stringify([...wallEl.children].map(i => i.src))); }
-    catch { statusEl.textContent = "no entran más fotos en este navegador"; }
-  }
-
-  async function sumar(files){
-    const lista = [...files].filter(f => f.type.startsWith("image/"));
-    if (!lista.length) return;
-    if (readOnly){ statusEl.textContent = "este muro es de solo lectura"; return; }
-
-    for (let i = 0; i < lista.length; i++){
-      statusEl.textContent = lista.length > 1 ? `revelando ${i+1} de ${lista.length}…` : "revelando…";
-      let dataUrl;
-      try { dataUrl = await revelar(lista[i]); }
-      catch { statusEl.textContent = "esa foto no se pudo abrir"; continue; }
-
-      const img = nuevaFoto(dataUrl);
-      const pegar = () => {
-        wallEl.prepend(img);
-        if (!vacioEl.hidden) vacioEl.hidden = true;
-      };
-
-      if (shared){
-        try { await shared.sync(pegar); }
-        catch (err){
-          const code = err && err.code;
-          if (code === "not_writer" || code === "not_granted" || code === "not_declared"){
-            soloLectura(); return;
-          }
-          statusEl.textContent = code === "too_large"
-            ? "el muro está lleno — no entra otra foto"
-            : "no se pudo guardar, probá de nuevo";
-          return;
-        }
-      } else {
-        pegar(); guardarLocal();
-      }
-    }
-    statusEl.textContent = lista.length > 1 ? `${lista.length} fotos al muro` : "pegada";
-    setTimeout(() => { statusEl.textContent = ""; }, 3200);
-  }
-
-  function soloLectura(){
-    readOnly = true;
-    dropEl.hidden = true;
-    toCarga.hidden = true;
-    statusEl.textContent = "";
-    noteEl.textContent = "Este muro es de otra persona: podés mirarlo, pero no sumar fotos.";
-  }
-
-  /* ---- eventos ---- */
-  dropEl.addEventListener("click", () => fileEl.click());
-  fileEl.addEventListener("change", e => { sumar(e.target.files); fileEl.value = ""; });
-
-  ["dragenter","dragover"].forEach(ev =>
-    document.addEventListener(ev, e => { e.preventDefault(); if(!readOnly) dropEl.classList.add("over"); }));
-  ["dragleave","drop"].forEach(ev =>
-    document.addEventListener(ev, e => { e.preventDefault(); dropEl.classList.remove("over"); }));
-  document.addEventListener("drop", e => {
-    if (e.dataTransfer && e.dataTransfer.files.length) sumar(e.dataTransfer.files);
-  });
-
-  document.addEventListener("claude:sync-off", () => {
-    noteEl.textContent = "Se cortó la sincronización: lo que sumes ahora lo ves solo vos.";
-  });
-
-  /* ---- arranque ---- */
-  (async () => {
-    shared = (window.claude && window.claude.use) ? await window.claude.use("artifact") : null;
-
-    if (shared){
-      noteEl.textContent = "Lo que subas lo ve todo el que tenga el link del muro.";
-      if (wallEl.children.length) vacioEl.hidden = true;
+Object.keys(UNIT_NAMES).forEach(u=>{
+  const chip = document.createElement("button");
+  chip.className = "chip active";
+  chip.textContent = UNIT_NAMES[u];
+  chip.dataset.unit = u;
+  chip.addEventListener("click", ()=>{
+    if(activeUnits.has(u)){
+      if(activeUnits.size===1) return; // al menos una unidad activa
+      activeUnits.delete(u);
+      chip.classList.remove("active");
     } else {
-      noteEl.textContent = "Sin muro compartido: las fotos quedan solo en este navegador.";
-      const fotos = leerLocal();
-      fotos.forEach(src => wallEl.append(nuevaFoto(src)));
-      if (fotos.length) vacioEl.hidden = true;
+      activeUnits.add(u);
+      chip.classList.add("active");
     }
-  })();
-})();
+    nextRound();
+  });
+  unitFilterEl.appendChild(chip);
+});
+
+document.getElementById("resetProgress").addEventListener("click", (e)=>{
+  e.preventDefault();
+  if(confirm("¿Reiniciar todo el progreso guardado?")){
+    localStorage.removeItem(STORAGE_KEY);
+    progress = loadProgress();
+    nextRound();
+  }
+});
+
+/* ======================= helpers ======================= */
+function pool(){
+  return FORMULAS.filter(f => activeUnits.has(f.unit));
+}
+
+// elige una tarjeta con más probabilidad si tiene peso alto (le cuesta más)
+function pickWeighted(exclude){
+  const items = pool().filter(f => f.id !== (exclude && exclude.id));
+  const source = items.length ? items : pool();
+  const weights = source.map(f => progress[f.id].weight || 1);
+  const total = weights.reduce((a,b)=>a+b,0);
+  let r = Math.random()*total;
+  for(let i=0;i<source.length;i++){
+    r -= weights[i];
+    if(r<=0) return source[i];
+  }
+  return source[source.length-1];
+}
+
+function sample(arr, n, excludeId){
+  const filtered = arr.filter(f=>f.id!==excludeId);
+  const shuffled = [...filtered].sort(()=>Math.random()-0.5);
+  return shuffled.slice(0, n);
+}
+
+function renderMath(el){
+  el.querySelectorAll("[data-tex]").forEach(node=>{
+    try{
+      katex.render(node.dataset.tex, node, {throwOnError:false});
+    }catch(e){}
+  });
+}
+
+function markResult(id, ok){
+  const p = progress[id];
+  p.seen++;
+  if(ok){
+    p.correct++;
+    p.weight = Math.max(1, p.weight - 1);
+  } else {
+    p.wrong++;
+    p.weight = Math.min(8, p.weight + 2);
+  }
+  saveProgress();
+  renderStats();
+}
+
+function renderStats(){
+  const items = pool();
+  let seen=0, correct=0;
+  items.forEach(f=>{ seen += progress[f.id].seen; correct += progress[f.id].correct; });
+  const mastered = items.filter(f => progress[f.id].correct >= 2 && progress[f.id].weight <= 2).length;
+  statsEl.innerHTML = `
+    <span><b>${items.length}</b> fórmulas activas</span>
+    <span><b>${mastered}</b> dominadas</span>
+    <span><b>${seen ? Math.round(100*correct/seen) : 0}%</b> aciertos</span>
+  `;
+}
+
+/* ======================= MODOS ======================= */
+
+function nextRound(){
+  renderStats();
+  if(mode==="flash") return renderFlash();
+  if(mode==="quiz-formula") return renderQuizFormula();
+  if(mode==="quiz-name") return renderQuizName();
+  if(mode==="type") return renderType();
+}
+
+/* --- Flashcards --- */
+function renderFlash(){
+  current = pickWeighted(current);
+  const f = current;
+  stageEl.innerHTML = `
+    <span class="prompt-tag">${UNIT_NAMES[f.unit]}</span>
+    <div class="prompt-name">${f.name}</div>
+    <div class="flip-hint">Pensá la fórmula… y dala vuelta.</div>
+    <button class="btn primary" id="flipBtn">🔄 Mostrar fórmula</button>
+    <div id="revealArea"></div>
+  `;
+  document.getElementById("flipBtn").addEventListener("click", ()=>{
+    const area = document.getElementById("revealArea");
+    area.innerHTML = `
+      <div class="reveal">
+        <div class="formula-big" data-tex="${escapeAttr(f.formula)}"></div>
+        ${f.vars ? `<div class="note">${f.vars}</div>` : ""}
+        ${f.note ? `<div class="note">${f.note}</div>` : ""}
+        <div class="row" style="margin-top:8px;">
+          <button class="btn bad" id="noSabia">😵 No sabía</button>
+          <button class="btn good" id="siSabia">✅ La sabía</button>
+        </div>
+      </div>
+    `;
+    renderMath(area);
+    document.getElementById("flipBtn").remove();
+    document.getElementById("noSabia").addEventListener("click", ()=>{ markResult(f.id, false); nextRound(); });
+    document.getElementById("siSabia").addEventListener("click", ()=>{ markResult(f.id, true); nextRound(); });
+  });
+}
+
+/* --- Quiz: dado el nombre, elegí la fórmula correcta --- */
+function renderQuizFormula(){
+  current = pickWeighted(current);
+  const f = current;
+  const distractors = sample(pool(), 3, f.id);
+  const options = [f, ...distractors].sort(()=>Math.random()-0.5);
+
+  stageEl.innerHTML = `
+    <span class="prompt-tag">${UNIT_NAMES[f.unit]}</span>
+    <div class="prompt-name">${f.name}</div>
+    <div class="choices" id="choicesArea"></div>
+  `;
+  const area = document.getElementById("choicesArea");
+  options.forEach(opt=>{
+    const div = document.createElement("div");
+    div.className = "choice";
+    div.innerHTML = `<span data-tex="${escapeAttr(opt.formula)}"></span>`;
+    div.addEventListener("click", ()=>{
+      const ok = opt.id === f.id;
+      document.querySelectorAll(".choice").forEach(c=>c.classList.add("disabled"));
+      div.classList.add(ok ? "correct" : "wrong");
+      if(!ok){
+        const correctEl = [...document.querySelectorAll(".choice")][options.indexOf(f)];
+        correctEl.classList.add("correct");
+      }
+      markResult(f.id, ok);
+      setTimeout(nextRound, ok ? 700 : 1400);
+    });
+    area.appendChild(div);
+  });
+  renderMath(area);
+}
+
+/* --- Quiz: dada la fórmula, elegí el nombre correcto --- */
+function renderQuizName(){
+  current = pickWeighted(current);
+  const f = current;
+  const distractors = sample(pool(), 3, f.id);
+  const options = [f, ...distractors].sort(()=>Math.random()-0.5);
+
+  stageEl.innerHTML = `
+    <span class="prompt-tag">${UNIT_NAMES[f.unit]}</span>
+    <div class="prompt-formula" data-tex="${escapeAttr(f.formula)}"></div>
+    <div class="choices" id="choicesArea"></div>
+  `;
+  renderMath(stageEl);
+  const area = document.getElementById("choicesArea");
+  options.forEach(opt=>{
+    const div = document.createElement("div");
+    div.className = "choice";
+    div.textContent = opt.name;
+    div.addEventListener("click", ()=>{
+      const ok = opt.id === f.id;
+      document.querySelectorAll(".choice").forEach(c=>c.classList.add("disabled"));
+      div.classList.add(ok ? "correct" : "wrong");
+      if(!ok){
+        const correctEl = [...document.querySelectorAll(".choice")][options.indexOf(f)];
+        correctEl.classList.add("correct");
+      }
+      markResult(f.id, ok);
+      setTimeout(nextRound, ok ? 700 : 1400);
+    });
+    area.appendChild(div);
+  });
+}
+
+/* --- Escribí la fórmula (texto libre, comparación flexible) --- */
+function normalizeFormulaText(s){
+  return s
+    .toLowerCase()
+    .replace(/\\text\{[^}]*\}/g, m => m.replace(/\\text\{|\}/g,""))
+    .replace(/\\cdot|\\times/g, "*")
+    .replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, "($1)/($2)")
+    .replace(/\\sqrt\{([^}]*)\}/g, "sqrt($1)")
+    .replace(/[\\{}]/g, "")
+    .replace(/\s+/g, "")
+    .replace(/°/g, "");
+}
+
+function renderType(){
+  current = pickWeighted(current);
+  const f = current;
+  stageEl.innerHTML = `
+    <span class="prompt-tag">${UNIT_NAMES[f.unit]}</span>
+    <div class="prompt-name">${f.name}</div>
+    <input type="text" class="type-input" id="typeInput" placeholder="Escribí la fórmula (ej: F = m * a)" autocomplete="off">
+    <div class="type-hint">No hace falta LaTeX: usá *, /, ^, sen(), cos(), tan(), sqrt(). Se compara de forma flexible.</div>
+    <div class="row">
+      <button class="btn primary" id="checkBtn">Comprobar</button>
+    </div>
+    <div id="typeResult"></div>
+  `;
+  const input = document.getElementById("typeInput");
+  input.focus();
+  const check = ()=>{
+    const userVal = normalizeFormulaText(input.value);
+    const correctVal = normalizeFormulaText(f.formula);
+    // comparación tolerante: iguales, o el string del usuario está contenido normalizado
+    const ok = userVal.length>0 && (userVal === correctVal || correctVal.includes(userVal) && userVal.length >= correctVal.length*0.6);
+    const result = document.getElementById("typeResult");
+    result.innerHTML = `
+      <div class="reveal">
+        <div class="feedback ${ok ? "good":"bad"}">${ok ? "✅ ¡Correcto!" : "❌ No coincide del todo"}</div>
+        <div class="formula-big" data-tex="${escapeAttr(f.formula)}"></div>
+        ${f.vars ? `<div class="note">${f.vars}</div>` : ""}
+        <button class="btn ${ok?'good':'primary'}" id="continueBtn">Siguiente →</button>
+      </div>
+    `;
+    renderMath(result);
+    document.getElementById("checkBtn").remove();
+    input.disabled = true;
+    markResult(f.id, ok);
+    document.getElementById("continueBtn").addEventListener("click", nextRound);
+  };
+  document.getElementById("checkBtn").addEventListener("click", check);
+  input.addEventListener("keydown", e=>{ if(e.key==="Enter") check(); });
+}
+
+function escapeAttr(s){
+  return s.replace(/&/g,"&amp;").replace(/"/g,"&quot;");
+}
+
+/* ======================= INIT ======================= */
+nextRound();
 </script>
+</body>
+</html>
