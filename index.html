@@ -322,6 +322,7 @@ const FORMULAS = [
   {id:"u1-3", unit:"U1", name:"Valor promedio de una medición", formula:"\\bar{m} = \\frac{1}{N}\\sum_{i=1}^{N} m_i", note:"", vars:"m̄: promedio · N: cantidad de mediciones · mᵢ: cada medición"},
   {id:"u1-4", unit:"U1", name:"Desviación estándar", formula:"\\sigma = \\sqrt{\\frac{1}{N-1}\\sum_{i=1}^{N}(m_i-\\bar{m})^2}", note:"", vars:"σ: desviación estándar"},
   {id:"u1-5", unit:"U1", name:"Incertidumbre del promedio", formula:"\\Delta m = \\frac{\\sigma}{\\sqrt{N}}", note:"Resultado final: m = m̄ ± Δm.", vars:"Δm: incertidumbre del promedio"},
+  {id:"u1-6", unit:"U1", name:"Error absoluto (valor verdadero conocido)", formula:"e = x_{medido} - x_{verdadero}", note:"Si NO se conoce el valor verdadero, la incertidumbre se toma como la mínima apreciación del instrumento, o bien con el proceso estadístico: promedio → desvíos (mediciones − promedio) → desvíos al cuadrado → suma de esos cuadrados dividida la raíz de N (fórmulas de arriba).", vars:"e: error absoluto"},
 
   // Unidad 2
   {id:"u2-1", unit:"U2", name:"Cantidad de imágenes entre dos espejos", formula:"n_{img} = \\frac{360°}{\\theta} - 1", note:"", vars:"n_img: cantidad de imágenes · θ: ángulo entre espejos"},
@@ -336,25 +337,37 @@ const FORMULAS = [
   {id:"u2-10", unit:"U2", name:"Índice de refracción y velocidad de la luz", formula:"n = \\frac{c}{v}", note:"", vars:"n: índice de refracción · c: vel. de la luz en el vacío · v: vel. en el medio"},
   {id:"u2-11", unit:"U2", name:"Ángulo crítico (reflexión interna total)", formula:"\\text{sen}(\\theta_c) = \\frac{n_2}{n_1} \\quad (n_1 > n_2)", note:"Es la Ley de Snell en el caso límite en que el rayo refractado sale a 90°.", vars:"θc: ángulo crítico"},
   {id:"u2-12", unit:"U2", name:"Desviación en lámina de caras paralelas", formula:"d = \\frac{h \\cdot \\text{sen}(\\theta_1-\\theta_2)}{\\cos(\\theta_2)}", note:"", vars:"d: desviación · h: espesor de la lámina"},
+  {id:"u2-13", unit:"U2", name:"Ángulo del prisma", formula:"A = r_1 + r_2", note:"", vars:"A: ángulo del prisma · r₁, r₂: ángulos de refracción en cada cara"},
+  {id:"u2-14", unit:"U2", name:"Desviación en un prisma", formula:"\\delta = \\theta_1 + \\theta_2 - A", note:"", vars:"δ: ángulo de desviación · θ₁: ángulo de incidencia · θ₂: ángulo de salida · A: ángulo del prisma"},
 
   // Unidad 3.1
   {id:"u3-1", unit:"U3", name:"Velocidad media (MRU)", formula:"v = \\frac{\\Delta x}{\\Delta t}", note:"", vars:"v: velocidad · Δx: desplazamiento · Δt: tiempo"},
+  {id:"u3-18", unit:"U3", name:"Posición (MRU)", formula:"x = x_0 + v \\cdot t", note:"", vars:"x₀: posición inicial"},
+  {id:"u3-19", unit:"U3", name:"Velocidad instantánea", formula:"v = \\frac{dx}{dt}", note:"Derivada de la posición respecto al tiempo.", vars:""},
   {id:"u3-2", unit:"U3", name:"Aceleración", formula:"a = \\frac{v-v_0}{t}", note:"", vars:"a: aceleración · v₀: velocidad inicial"},
   {id:"u3-3", unit:"U3", name:"Posición (MRUV)", formula:"x = x_0 + v_0 \\cdot t + \\frac{1}{2}\\cdot a \\cdot t^2", note:"", vars:"x₀: posición inicial"},
   {id:"u3-4", unit:"U3", name:"Velocidad (MRUV)", formula:"v = v_0 + a \\cdot t", note:"", vars:""},
+  {id:"u3-20", unit:"U3", name:"Velocidad al cuadrado (MRUV, Torricelli)", formula:"v^2 = v_0^2 + 2 \\cdot a \\cdot \\Delta x", note:"", vars:""},
   {id:"u3-5", unit:"U3", name:"Desplazamiento (vector)", formula:"\\vec{d} = x_f - x_i", note:"", vars:"x_f, x_i: posición final e inicial"},
   {id:"u3-6", unit:"U3", name:"Perímetro de una circunferencia", formula:"P = 2 \\cdot \\pi \\cdot r", note:"La distancia recorrida en medio círculo: d = π·r.", vars:"r: radio"},
   {id:"u3-7", unit:"U3", name:"Componentes de la velocidad inicial (Tiro Oblicuo)", formula:"v_{0x} = v_0 \\cdot \\cos(\\theta) \\qquad v_{0y} = v_0 \\cdot \\text{sen}(\\theta)", note:"", vars:""},
   {id:"u3-8", unit:"U3", name:"Posición horizontal — Tiro Oblicuo", formula:"x = v_{0x} \\cdot t", note:"Variación de x = x₀ + v₀t (MRU aplicado al eje x, sin aceleración horizontal).", vars:""},
   {id:"u3-9", unit:"U3", name:"Velocidad vertical — Tiro Oblicuo", formula:"v_y = v_{0y} - g \\cdot t", note:"Variación de v = v₀ + at.", vars:"g: aceleración de la gravedad"},
   {id:"u3-10", unit:"U3", name:"Posición vertical — Tiro Oblicuo", formula:"y = y_0 + v_{0y}\\cdot t - \\frac{1}{2}\\cdot g \\cdot t^2", note:"Variación de x = x₀ + v₀t + ½at².", vars:""},
+  {id:"u3-23", unit:"U3", name:"Vuelta completa en radianes", formula:"1\\ \\text{vuelta} = 2\\pi\\ \\text{rad}", note:"", vars:""},
   {id:"u3-11", unit:"U3", name:"Frecuencia", formula:"f = \\frac{\\text{vueltas}}{\\text{tiempo}}", note:"", vars:""},
+  {id:"u3-24", unit:"U3", name:"Frecuencia (inverso del período)", formula:"f = \\frac{1}{T}", note:"", vars:"T: período"},
   {id:"u3-12", unit:"U3", name:"Velocidad angular", formula:"\\omega = 2 \\cdot \\pi \\cdot f", note:"", vars:"ω: velocidad angular"},
   {id:"u3-13", unit:"U3", name:"Ángulo girado", formula:"\\theta = \\text{vueltas} \\times 2\\pi", note:"", vars:""},
   {id:"u3-14", unit:"U3", name:"Arco recorrido", formula:"s = \\theta \\cdot r", note:"Relación ángulo-radio.", vars:"s: arco · r: radio"},
   {id:"u3-15", unit:"U3", name:"Velocidad tangencial", formula:"v_t = \\omega \\cdot r", note:"", vars:""},
   {id:"u3-16", unit:"U3", name:"Aceleración centrípeta", formula:"a_c = \\frac{v_t^2}{r} = \\omega^2 \\cdot r", note:"", vars:""},
+  {id:"u3-21", unit:"U3", name:"Aceleración tangencial (definición)", formula:"a_t = \\frac{dv}{dt}", note:"", vars:""},
+  {id:"u3-22", unit:"U3", name:"Aceleración total (movimiento curvilíneo)", formula:"a = \\sqrt{a_n^2 + a_t^2}", note:"a_n es la aceleración normal (= aceleración centrípeta = v²/r).", vars:""},
+  {id:"u3-25", unit:"U3", name:"Aceleración angular", formula:"\\alpha = \\frac{\\omega_f - \\omega_0}{t}", note:"", vars:"α: aceleración angular"},
+  {id:"u3-26", unit:"U3", name:"Aceleración tangencial (movimiento circular)", formula:"a_t = \\alpha \\cdot r", note:"", vars:""},
   {id:"u3-17", unit:"U3", name:"Velocidad relativa", formula:"v_{A/B} = v_A - v_B", note:"Composición de velocidades.", vars:""},
+  {id:"u3-27", unit:"U3", name:"Posición relativa", formula:"\\vec{r}_{P/A} = \\vec{r}_{P/B} + \\vec{r}_{B/A}", note:"", vars:""},
 
   // Unidad 4
   {id:"u4-1", unit:"U4", name:"Segunda Ley de Newton", formula:"F = m \\cdot a", note:"Base de toda la unidad de dinámica.", vars:"F: fuerza neta · m: masa · a: aceleración"},
@@ -364,6 +377,9 @@ const FORMULAS = [
   {id:"u4-5", unit:"U4", name:"Aceleración en plano inclinado con rozamiento", formula:"a = g \\cdot [\\text{sen}(\\theta) - \\mu \\cdot \\cos(\\theta)]", note:"Combinación de F=ma, Pₓ, P_y y f_r.", vars:""},
   {id:"u4-6", unit:"U4", name:"Sistema con polea en plano inclinado", formula:"a = \\frac{P_1 - P_{2x}}{m_1+m_2} \\qquad T = P_1 - m_1 \\cdot a", note:"Sale de sumar las ecuaciones de Newton de cada cuerpo (la T se cancela).", vars:"T: tensión"},
   {id:"u4-7", unit:"U4", name:"Aceleración centrípeta desde el ángulo (péndulo cónico)", formula:"a_c = g \\cdot \\tan(\\theta)", note:"Sale de dividir Tₓ=m·a_c sobre T_y=m·g.", vars:""},
+  {id:"u4-8", unit:"U4", name:"Conversión kilogramo-fuerza a Newton", formula:"1\\ kgf = 9.81\\ N", note:"", vars:""},
+  {id:"u4-9", unit:"U4", name:"Constante de gravitación universal", formula:"G = 6.67\\times10^{-11}\\ \\frac{N\\cdot m^2}{kg^2}", note:"", vars:""},
+  {id:"u4-10", unit:"U4", name:"Campo gravitatorio", formula:"g = \\frac{F_g}{m}", note:"", vars:"g: campo gravitatorio"},
 ];
 
 const UNIT_NAMES = {U1:"U1 · Mediciones", U2:"U2 · Óptica", U3:"U3 · Cinemática", U4:"U4 · Dinámica"};
