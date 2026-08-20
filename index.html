@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Filtro 35mm</title>
+<style>
+  :root{
+    --bg:#0e0f0d;
+    --panel:#161815;
+    --line:#2a2d27;
+    --text:#e8e4d9;
+    --muted:#8f9184;
+    --accent:#c9a227;
+    --accent-soft:#3a3320;
+    --radius:14px;
+    --font:ui-sans-serif,-apple-system,"Segoe UI",Inter,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    padding:32px 20px 64px;
+  }
+  .wrap{max-width:1080px;margin:0 auto}
+
+  header{margin-bottom:28px}
+  h1{
+    font-size:clamp(24px,4vw,34px);
+    margin:0 0 6px;
+    letter-spacing:-0.02em;
+    font-weight:650;
+  }
+  h1 em{font-style:normal;color:var(--accent)}
+  .sub{color:var(--muted);font-size:14px;line-height:1.6;margin:0;max-width:62ch}
+
+  /* ---------- dropzone ---------- */
+  #drop{
+    border:1.5px dashed var(--line);
+    border-radius:var(--radius);
+    background:var(--panel);
+    padding:44px 24px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .18s ease, background .18s ease;
+  }
+  #drop:hover,#drop.over{border-color:var(--accent);background:#1a1c17}
+  #drop .big{font-size:16px;font-weight:600;margin-bottom:6px}
+  #drop .small{font-size:13px;color:var(--muted)}
+  input[type=file]{display:none}
+
+  /* ---------- workspace ---------- */
+  #work{display:none;margin-top:24px}
+  #work.on{display:block}
+
+  .stage{
+    position:relative;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:220px;
+    overflow:hidden;
+  }
+  canvas{
+    max-width:100%;
+    max-height:70vh;
+    display:block;
+    border-radius:6px;
+    background:#000;
+  }
+  #before{display:none}
+  .stage.compare #after{display:none}
+  .stage.compare #before{display:block}
+
+  .badge{
+    position:absolute;top:22px;left:22px;
+    font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    background:rgba(0,0,0,.55);backdrop-filter:blur(6px);
+    padding:5px 9px;border-radius:99px;color:var(--text);
+    pointer-events:none;
+  }
+
+  .busy{
+    position:absolute;inset:0;
+    background:rgba(14,15,13,.82);
+    display:none;align-items:center;justify-content:center;
+    font-size:14px;color:var(--muted);letter-spacing:.02em;
+  }
+  .busy.on{display:flex}
+
+  /* ---------- controls ---------- */
+  .controls{
+    margin-top:16px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px 20px;
+    display:grid;
+    gap:18px;
+    grid-template-columns:1fr 1fr;
+  }
+  @media (max-width:680px){.controls{grid-template-columns:1fr}}
+
+  .ctl label{
+    display:flex;justify-content:space-between;align-items:baseline;
+    font-size:13px;margin-bottom:9px;color:var(--muted);
+  }
+  .ctl label b{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
+  input[type=range]{
+    width:100%;height:3px;appearance:none;background:var(--line);
+    border-radius:99px;outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    appearance:none;width:15px;height:15px;border-radius:50%;
+    background:var(--accent);cursor:pointer;border:0;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:15px;height:15px;border-radius:50%;background:var(--accent);
+    cursor:pointer;border:0;
+  }
+
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;grid-column:1/-1}
+  button{
+    font:inherit;font-size:13.5px;font-weight:600;
+    padding:10px 16px;border-radius:9px;cursor:pointer;
+    border:1px solid var(--line);background:#1d201a;color:var(--text);
+    transition:background .15s ease,border-color .15s ease;
+  }
+  button:hover{background:#252921;border-color:#3a3e35}
+  button.primary{background:var(--accent);color:#1a1602;border-color:var(--accent)}
+  button.primary:hover{background:#dbb32e;border-color:#dbb32e}
+  button[aria-pressed=true]{border-color:var(--accent);background:var(--accent-soft)}
+  .spacer{flex:1}
+  .hint{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Filtro <em>35mm</em></h1>
+    <p class="sub">
+      Sube una foto y se le aplica automáticamente el look de carrete analógico:
+      sombras cian, luces cálidas, negros levantados, halación, grano y viñeta.
+      Todo se procesa en tu navegador — la imagen no se sube a ningún sitio.
+    </p>
+  </header>
+
+  <div id="drop" tabindex="0" role="button" aria-label="Cargar imagen">
+    <div class="big">Arrastra una foto aquí</div>
+    <div class="small">o haz clic para elegirla · JPG, PNG, WEBP, HEIC</div>
+  </div>
+  <input type="file" id="file" accept="image/*">
+
+  <section id="work">
+    <div class="stage" id="stage">
+      <canvas id="after"></canvas>
+      <canvas id="before"></canvas>
+      <span class="badge" id="badge">Con filtro</span>
+      <div class="busy" id="busy">Revelando…</div>
+    </div>
+
+    <div class="controls">
+      <div class="ctl">
+        <label for="amount">Intensidad del filtro <b id="amountV">100%</b></label>
+        <input type="range" id="amount" min="0" max="150" value="100" step="1">
+      </div>
+      <div class="ctl">
+        <label for="grain">Grano <b id="grainV">100%</b></label>
+        <input type="range" id="grain" min="0" max="200" value="100" step="1">
+      </div>
+
+      <div class="row">
+        <button id="compare" aria-pressed="false">Ver original</button>
+        <button id="border" aria-pressed="false">Marco blanco</button>
+        <button id="another">Otra foto</button>
+        <span class="spacer"></span>
+        <button class="primary" id="download">Descargar JPG</button>
+      </div>
+      <div class="row"><span class="hint" id="meta"></span></div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const MAX_EDGE = 3200;          // límite de proceso para no colgar el navegador
+  const $ = id => document.getElementById(id);
+
+  const dropEl   = $("drop"),   fileEl   = $("file"),
+        workEl   = $("work"),   stageEl  = $("stage"),
+        afterEl  = $("after"),  beforeEl = $("before"),
+        badgeEl  = $("badge"),  busyEl   = $("busy"),
+        metaEl   = $("meta");
+
+  const amountEl = $("amount"), grainEl = $("grain"),
+        amountV  = $("amountV"), grainV = $("grainV");
+
+  const actx = afterEl.getContext("2d", { willReadFrequently: true });
+  const bctx = beforeEl.getContext("2d");
+
+  let source = null;              // ImageBitmap|HTMLImageElement ya reorientado
+  let baseName = "foto";
+  let withBorder = false;
+  let renderToken = 0;
+
+  /* ============================================================
+     1. TABLAS DE TONO  (curva de película, precalculada 0-255)
+     ============================================================ */
+  const LIFT       = 0.055;   // negros levantados: nunca llegan a 0
+  const SHOULDER   = 0.72;    // punto donde empiezan a comprimirse las luces
+  const SHOULDER_K = 1.8;     // dureza del rolloff
+  const CONTRAST   = 0.88;    // -12% de contraste global
+
+  const toneLUT = new Float32Array(256);
+  {
+    const norm = 1 - Math.exp(-SHOULDER_K);
+    for (let i = 0; i < 256; i++) {
+      let x = i / 255;
+      x = LIFT + x * (1 - LIFT);                       // lift de sombras
+      if (x > SHOULDER) {                              // shoulder suave en luces
+        const t = (x - SHOULDER) / (1 - SHOULDER);
+        x = SHOULDER + (1 - SHOULDER) * (1 - Math.exp(-SHOULDER_K * t)) / norm;
+      }
+      x = (x - 0.5) * CONTRAST + 0.5;                  // contraste
+      toneLUT[i] = x < 0 ? 0 : x > 1 ? 1 : x;
+    }
+  }
+
+  /* ============================================================
+     2. PASADA DE COLOR (por píxel)
+        WB → curva → split-tone → saturación
+     ============================================================ */
+  function grade(data, k) {
+    // k = intensidad (0..1.5). Se mezcla con el original al final.
+    const WB_R = 1.000, WB_G = 1.015, WB_B = 0.985;    // cast verdoso-frío de negativo
+
+    for (let i = 0; i < data.length; i += 4) {
+      const or = data[i], og = data[i + 1], ob = data[i + 2];
+
+      let r = toneLUT[Math.min(255, (or * WB_R) | 0)];
+      let g = toneLUT[Math.min(255, (og * WB_G) | 0)];
+      let b = toneLUT[Math.min(255, (ob * WB_B) | 0)];
+
+      const L = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+      // split-toning: sombras → cian/verde, luces → naranja
+      const sw = (1 - L) * (1 - L);
+      const hw = L * L;
+      r += -0.030 * sw + 0.035 * hw;
+      g +=  0.012 * sw + 0.012 * hw;
+      b +=  0.035 * sw - 0.030 * hw;
+
+      // desaturación selectiva (los azules aguantan más cuerpo)
+      const sat = (b > r && b > g) ? 0.92 : 0.80;
+      const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      r = lum + (r - lum) * sat;
+      g = lum + (g - lum) * sat;
+      b = lum + (b - lum) * sat;
+
+      // mezcla con el original según la intensidad
+      let nr = or + (r * 255 - or) * k;
+      let ng = og + (g * 255 - og) * k;
+      let nb = ob + (b * 255 - ob) * k;
+
+      data[i]     = nr < 0 ? 0 : nr > 255 ? 255 : nr;
+      data[i + 1] = ng < 0 ? 0 : ng > 255 ? 255 : ng;
+      data[i + 2] = nb < 0 ? 0 : nb > 255 ? 255 : nb;
+    }
+  }
+
+  /* ============================================================
+     3. ABERRACIÓN CROMÁTICA radial (óptica de compacta barata)
+     ============================================================ */
+  function chromatic(src, w, h, px) {
+    if (px < 0.15) return src;
+    const out = new Uint8ClampedArray(src);
+    const cx = w / 2, cy = h / 2;
+    const maxR = Math.hypot(cx, cy);
+
+    for (let y = 0; y < h; y++) {
+      const dy = y - cy;
+      for (let x = 0; x < w; x++) {
+        const dx = x - cx;
+        const r = Math.hypot(dx, dy) / maxR;         // 0 centro → 1 esquina
+        const shift = px * r * r;
+        if (shift < 0.3) continue;
+
+        const ux = dx / (r * maxR || 1), uy = dy / (r * maxR || 1);
+        const i = (y * w + x) * 4;
+
+        // canal rojo hacia fuera, azul hacia dentro
+        const rx = Math.round(x + ux * shift), ry = Math.round(y + uy * shift);
+        const bx = Math.round(x - ux * shift), by = Math.round(y - uy * shift);
+
+        if (rx >= 0 && rx < w && ry >= 0 && ry < h)
+          out[i] = src[(ry * w + rx) * 4];
+        if (bx >= 0 && bx < w && by >= 0 && by < h)
+          out[i + 2] = src[(by * w + bx) * 4 + 2];
+      }
+    }
+    return out;
+  }
+
+  /* ============================================================
+     4. GRANO + VIÑETA (pasada final)
+     ============================================================ */
+  function grainVignette(data, w, h, gAmt, vAmt) {
+    const cx = w / 2, cy = h / 2;
+    const maxR2 = cx * cx + cy * cy;
+
+    for (let y = 0; y < h; y++) {
+      const dy = y - cy, dy2 = dy * dy;
+      for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4;
+        let r = data[i], g = data[i + 1], b = data[i + 2];
+
+        // viñeta suave (~-13% en esquinas)
+        if (vAmt > 0) {
+          const dx = x - cx;
+          const rr = (dx * dx + dy2) / maxR2;
+          const v = 1 - vAmt * rr * rr;
+          r *= v; g *= v; b *= v;
+        }
+
+        // grano de luminancia, más presente en sombras
+        if (gAmt > 0) {
+          const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+          const n = (Math.random() - 0.5) * gAmt * (1 + 1.5 * (1 - lum));
+          r += n; g += n; b += n;
+        }
+
+        data[i]     = r < 0 ? 0 : r > 255 ? 255 : r;
+        data[i + 1] = g < 0 ? 0 : g > 255 ? 255 : g;
+        data[i + 2] = b < 0 ? 0 : b > 255 ? 255 : b;
+      }
+    }
+  }
+
+  /* ============================================================
+     5. HALACIÓN — las luces sangran en cálido
+     ============================================================ */
+  function halation(ctx, w, h, strength) {
+    if (strength <= 0) return;
+    const src = ctx.getImageData(0, 0, w, h);
+    const hi = ctx.createImageData(w, h);
+    const s = src.data, d = hi.data;
+
+    for (let i = 0; i < s.length; i += 4) {
+      const lum = (0.2126 * s[i] + 0.7152 * s[i + 1] + 0.0722 * s[i + 2]) / 255;
+      const m = lum > 0.72 ? (lum - 0.72) / 0.28 : 0;   // sólo altas luces
+      d[i]     = 255 * m;
+      d[i + 1] = 170 * m;
+      d[i + 2] =  90 * m;
+      d[i + 3] = 255;
+    }
+
+    const tmp = document.createElement("canvas");
+    tmp.width = w; tmp.height = h;
+    tmp.getContext("2d").putImageData(hi, 0, 0);
+
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    ctx.globalAlpha = strength;
+    ctx.filter = `blur(${Math.max(4, Math.round(Math.min(w, h) * 0.012))}px)`;
+    ctx.drawImage(tmp, 0, 0);
+    ctx.restore();
+    ctx.filter = "none";
+  }
+
+  /* ============================================================
+     6. SOFTNESS — pérdida leve de nitidez de lente
+     ============================================================ */
+  function soften(ctx, cv, amount) {
+    if (amount <= 0) return;
+    const tmp = document.createElement("canvas");
+    tmp.width = cv.width; tmp.height = cv.height;
+    tmp.getContext("2d").drawImage(cv, 0, 0);
+
+    ctx.save();
+    ctx.globalAlpha = amount;
+    ctx.filter = `blur(${Math.max(1, Math.round(Math.min(cv.width, cv.height) * 0.0012))}px)`;
+    ctx.drawImage(tmp, 0, 0);
+    ctx.restore();
+    ctx.filter = "none";
+  }
+
+  /* ============================================================
+     PIPELINE COMPLETO
+     ============================================================ */
+  async function render() {
+    if (!source) return;
+    const token = ++renderToken;
+
+    busyEl.classList.add("on");
+    await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+    if (token !== renderToken) return;
+
+    const k     = +amountEl.value / 100;
+    const gAmt  = (+grainEl.value / 100) * 7.5 * Math.min(1, k || 0.001);
+    const vAmt  = 0.13 * k;
+
+    // --- tamaño de trabajo ---
+    const iw = source.width, ih = source.height;
+    const scale = Math.min(1, MAX_EDGE / Math.max(iw, ih));
+    const w = Math.max(1, Math.round(iw * scale));
+    const h = Math.max(1, Math.round(ih * scale));
+
+    // marco blanco: 4.5% del lado corto
+    const pad = withBorder ? Math.round(Math.min(w, h) * 0.045) : 0;
+
+    afterEl.width  = w + pad * 2;
+    afterEl.height = h + pad * 2;
+    beforeEl.width = w + pad * 2;
+    beforeEl.height = h + pad * 2;
+
+    // original (para el botón comparar)
+    bctx.fillStyle = "#f4f1ea";
+    bctx.fillRect(0, 0, beforeEl.width, beforeEl.height);
+    bctx.drawImage(source, pad, pad, w, h);
+
+    // --- pintar y procesar sólo el área de imagen ---
+    actx.fillStyle = "#f4f1ea";
+    actx.fillRect(0, 0, afterEl.width, afterEl.height);
+    actx.drawImage(source, pad, pad, w, h);
+
+    let img = actx.getImageData(pad, pad, w, h);
+
+    // 1) aberración cromática
+    const caPx = 1.6 * k * Math.max(w, h) / 2000;
+    img = new ImageData(chromatic(img.data, w, h, caPx), w, h);
+
+    // 2) gradación de color
+    grade(img.data, k);
+    actx.putImageData(img, pad, pad);
+    if (token !== renderToken) return;
+
+    // 3) halación + 4) softness (operan sobre el canvas completo,
+    //    con el marco ya de color crema, así que no lo ensucian)
+    halation(actx, afterEl.width, afterEl.height, 0.22 * k);
+    soften(actx, afterEl, 0.35 * k);
+
+    // 5) grano + viñeta, otra vez sólo sobre la imagen
+    img = actx.getImageData(pad, pad, w, h);
+    grainVignette(img.data, w, h, gAmt, vAmt);
+    actx.putImageData(img, pad, pad);
+
+    metaEl.textContent =
+      `${iw}×${ih}px` + (scale < 1 ? ` · procesada a ${w}×${h}` : "");
+
+    if (token === renderToken) busyEl.classList.remove("on");
+  }
+
+  /* ============================================================
+     CARGA DE ARCHIVO
+     ============================================================ */
+  async function load(file) {
+    if (!file || !file.type.startsWith("image/")) {
+      alert("Ese archivo no es una imagen.");
+      return;
+    }
+    baseName = (file.name || "foto").replace(/\.[^.]+$/, "");
+
+    try {
+      // from-image respeta la orientación EXIF (fotos de móvil giradas)
+      source = await createImageBitmap(file, { imageOrientation: "from-image" });
+    } catch {
+      source = await new Promise((res, rej) => {
+        const im = new Image();
+        im.onload = () => res(im);
+        im.onerror = () => rej(new Error("no se pudo leer la imagen"));
+        im.src = URL.createObjectURL(file);
+      }).catch(() => null);
+      if (!source) { alert("No se pudo abrir esa imagen."); return; }
+    }
+
+    workEl.classList.add("on");
+    dropEl.style.display = "none";
+    await render();
+    workEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  /* ============================================================
+     EVENTOS
+     ============================================================ */
+  dropEl.addEventListener("click", () => fileEl.click());
+  dropEl.addEventListener("keydown", e => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileEl.click(); }
+  });
+  fileEl.addEventListener("change", e => e.target.files[0] && load(e.target.files[0]));
+
+  ["dragenter", "dragover"].forEach(ev =>
+    document.addEventListener(ev, e => { e.preventDefault(); dropEl.classList.add("over"); }));
+  ["dragleave", "drop"].forEach(ev =>
+    document.addEventListener(ev, e => { e.preventDefault(); dropEl.classList.remove("over"); }));
+  document.addEventListener("drop", e => {
+    const f = e.dataTransfer && e.dataTransfer.files[0];
+    if (f) load(f);
+  });
+  document.addEventListener("paste", e => {
+    const it = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith("image/"));
+    if (it) load(it.getAsFile());
+  });
+
+  let t = null;
+  const debounced = () => { clearTimeout(t); t = setTimeout(render, 130); };
+
+  amountEl.addEventListener("input", () => {
+    amountV.textContent = amountEl.value + "%";
+    debounced();
+  });
+  grainEl.addEventListener("input", () => {
+    grainV.textContent = grainEl.value + "%";
+    debounced();
+  });
+
+  $("compare").addEventListener("click", e => {
+    const on = stageEl.classList.toggle("compare");
+    e.currentTarget.setAttribute("aria-pressed", String(on));
+    e.currentTarget.textContent = on ? "Ver con filtro" : "Ver original";
+    badgeEl.textContent = on ? "Original" : "Con filtro";
+  });
+
+  $("border").addEventListener("click", e => {
+    withBorder = !withBorder;
+    e.currentTarget.setAttribute("aria-pressed", String(withBorder));
+    render();
+  });
+
+  $("another").addEventListener("click", () => {
+    fileEl.value = "";
+    fileEl.click();
+  });
+
+  $("download").addEventListener("click", () => {
+    afterEl.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${baseName}-35mm.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }, "image/jpeg", 0.94);
+  });
+})();
+</script>
+</body>
+</html>
