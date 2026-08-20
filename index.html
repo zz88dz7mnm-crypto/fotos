@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Practicá — Física I</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<style>
+  :root{
+    --bg:#0f1115;
+    --panel:#171a21;
+    --panel2:#1d212a;
+    --border:#2a2f3a;
+    --text:#e8eaed;
+    --muted:#9aa3b2;
+    --accent:#5eb3ff;
+    --accent2:#7dd3a0;
+    --bad:#e8767a;
+    --tag-bg:#25344a;
+    --tag-text:#8fc4ff;
+    --var-bg:#3a2f1f;
+    --var-text:#e8c07a;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#f5f6f8;
+      --panel:#ffffff;
+      --panel2:#f0f2f5;
+      --border:#e0e3e8;
+      --text:#1b1f27;
+      --muted:#5b6472;
+      --accent:#1a6fd1;
+      --accent2:#1f8a5c;
+      --bad:#c23b3f;
+      --tag-bg:#e6f0fd;
+      --tag-text:#1a6fd1;
+      --var-bg:#fdf1de;
+      --var-text:#9a6a13;
+    }
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;
+    min-height:100vh;
+  }
+  header{
+    padding:28px 20px 16px;
+    max-width:760px;
+    margin:0 auto;
+    text-align:center;
+  }
+  header h1{
+    font-size:1.5rem;
+    margin:0 0 6px;
+    letter-spacing:-0.01em;
+  }
+  header p{
+    color:var(--muted);
+    margin:0;
+    font-size:0.9rem;
+  }
+  main{
+    max-width:760px;
+    margin:0 auto;
+    padding:8px 20px 80px;
+  }
+
+  /* --- tabs --- */
+  .tabs{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    justify-content:center;
+    margin:18px 0;
+  }
+  .tab-btn{
+    background:var(--panel2);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:8px 14px;
+    border-radius:999px;
+    font-size:0.82rem;
+    cursor:pointer;
+    font-weight:600;
+  }
+  .tab-btn.active{
+    background:var(--accent);
+    color:#fff;
+    border-color:var(--accent);
+  }
+
+  /* --- unit filter --- */
+  .unit-filter{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    justify-content:center;
+    margin-bottom:20px;
+  }
+  .chip{
+    background:var(--panel);
+    border:1px solid var(--border);
+    color:var(--muted);
+    padding:5px 11px;
+    border-radius:999px;
+    font-size:0.74rem;
+    cursor:pointer;
+  }
+  .chip.active{
+    background:var(--tag-bg);
+    color:var(--tag-text);
+    border-color:var(--tag-text);
+  }
+
+  /* --- stats bar --- */
+  .stats{
+    display:flex;
+    justify-content:center;
+    gap:22px;
+    margin-bottom:18px;
+    font-size:0.8rem;
+    color:var(--muted);
+    flex-wrap:wrap;
+  }
+  .stats b{ color:var(--text); }
+
+  /* --- card / game area --- */
+  .stage{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:26px 22px;
+    min-height:230px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    gap:16px;
+  }
+  .prompt-tag{
+    font-size:0.7rem;
+    color:var(--tag-text);
+    background:var(--tag-bg);
+    padding:3px 10px;
+    border-radius:6px;
+    font-weight:600;
+  }
+  .prompt-name{
+    font-size:1.15rem;
+    font-weight:600;
+    max-width:520px;
+  }
+  .prompt-formula{
+    font-size:1.4rem;
+    overflow-x:auto;
+    max-width:100%;
+    padding:4px 0;
+  }
+  .flip-hint{
+    color:var(--muted);
+    font-size:0.78rem;
+  }
+  .reveal{
+    width:100%;
+    border-top:1px solid var(--border);
+    padding-top:16px;
+    margin-top:4px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+  }
+  .reveal .formula-big{
+    font-size:1.5rem;
+    overflow-x:auto;
+    max-width:100%;
+  }
+  .reveal .note{
+    color:var(--muted);
+    font-size:0.82rem;
+    max-width:520px;
+  }
+
+  .btn{
+    border:1px solid var(--border);
+    background:var(--panel2);
+    color:var(--text);
+    padding:10px 18px;
+    border-radius:10px;
+    font-size:0.88rem;
+    cursor:pointer;
+    font-weight:600;
+  }
+  .btn.primary{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+  }
+  .btn.good{
+    background:var(--accent2);
+    border-color:var(--accent2);
+    color:#08251a;
+  }
+  .btn.bad{
+    background:var(--bad);
+    border-color:var(--bad);
+    color:#2b0b0c;
+  }
+  .row{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+
+  /* --- multiple choice --- */
+  .choices{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    width:100%;
+    max-width:560px;
+  }
+  .choice{
+    background:var(--panel2);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px 16px;
+    cursor:pointer;
+    font-size:1.05rem;
+    text-align:left;
+    overflow-x:auto;
+  }
+  .choice:hover{ border-color:var(--accent); }
+  .choice.correct{
+    background:#173a26;
+    border-color:var(--accent2);
+    color:#fff;
+  }
+  .choice.wrong{
+    background:#3a1919;
+    border-color:var(--bad);
+    color:#fff;
+  }
+  .choice.disabled{ pointer-events:none; }
+
+  /* --- type mode --- */
+  .type-input{
+    width:100%;
+    max-width:420px;
+    background:var(--panel2);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:12px 14px;
+    border-radius:10px;
+    font-size:1rem;
+    text-align:center;
+  }
+  .type-hint{
+    color:var(--muted);
+    font-size:0.76rem;
+    max-width:480px;
+  }
+  .feedback{
+    font-weight:700;
+    font-size:0.95rem;
+  }
+  .feedback.good{ color:var(--accent2); }
+  .feedback.bad{ color:var(--bad); }
+
+  footer{
+    max-width:760px;
+    margin:40px auto 0;
+    padding:20px 20px 60px;
+    color:var(--muted);
+    font-size:0.78rem;
+    border-top:1px solid var(--border);
+    text-align:center;
+  }
+  ::selection{background:var(--accent); color:#fff;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🧠 Practicá Física I</h1>
+  <p>Jugá con las fórmulas de las Unidades 1 a 4 hasta aprendértelas de memoria.</p>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab-btn" data-mode="flash">🃏 Flashcards</button>
+    <button class="tab-btn" data-mode="quiz-formula">🎯 ¿Cuál fórmula?</button>
+    <button class="tab-btn" data-mode="quiz-name">🏷️ ¿Cómo se llama?</button>
+    <button class="tab-btn" data-mode="type">⌨️ Escribila</button>
+  </div>
+
+  <div class="unit-filter" id="unitFilter"></div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="stage" id="stage"></div>
+</main>
+
+<footer>
+  Progreso guardado en este navegador. Datos: formulario de Física I (Unidades 1–4).
+  <br><a href="#" id="resetProgress" style="color:var(--muted);">Reiniciar progreso</a>
+</footer>
+
+<script>
+/* ======================= DATA ======================= */
+const FORMULAS = [
+  // Unidad 1
+  {id:"u1-1", unit:"U1", name:"Ley de gravitación universal", formula:"F = G \\cdot \\frac{M \\cdot m}{r^2}", note:"Despejando G se obtiene G = F·r² / (M·m).", vars:"F: fuerza · G: constante de gravitación · M, m: masas · r: distancia"},
+  {id:"u1-2", unit:"U1", name:"Equivalencia masa-energía", formula:"E = m \\cdot c^2", note:"Sirve para deducir las dimensiones de la energía (Joule = kg·m²/s²).", vars:"E: energía · m: masa · c: velocidad de la luz"},
+  {id:"u1-3", unit:"U1", name:"Valor promedio de una medición", formula:"\\bar{m} = \\frac{1}{N}\\sum_{i=1}^{N} m_i", note:"", vars:"m̄: promedio · N: cantidad de mediciones · mᵢ: cada medición"},
+  {id:"u1-4", unit:"U1", name:"Desviación estándar", formula:"\\sigma = \\sqrt{\\frac{1}{N-1}\\sum_{i=1}^{N}(m_i-\\bar{m})^2}", note:"", vars:"σ: desviación estándar"},
+  {id:"u1-5", unit:"U1", name:"Incertidumbre del promedio", formula:"\\Delta m = \\frac{\\sigma}{\\sqrt{N}}", note:"Resultado final: m = m̄ ± Δm.", vars:"Δm: incertidumbre del promedio"},
+
+  // Unidad 2
+  {id:"u2-1", unit:"U2", name:"Cantidad de imágenes entre dos espejos", formula:"n_{img} = \\frac{360°}{\\theta} - 1", note:"", vars:"n_img: cantidad de imágenes · θ: ángulo entre espejos"},
+  {id:"u2-2", unit:"U2", name:"Suma de ángulos internos de un triángulo", formula:"\\alpha + \\beta + \\theta = 180°", note:"Usada para hallar el ángulo de salida de un rayo reflejado entre dos espejos.", vars:"α, β, θ: ángulos internos"},
+  {id:"u2-3", unit:"U2", name:"Funciones trigonométricas básicas", formula:"\\text{sen}(\\theta)=\\frac{\\text{op}}{\\text{hip}} \\quad \\cos(\\theta)=\\frac{\\text{ady}}{\\text{hip}} \\quad \\tan(\\theta)=\\frac{\\text{op}}{\\text{ady}}", note:"", vars:"op: opuesto · ady: adyacente · hip: hipotenusa"},
+  {id:"u2-4", unit:"U2", name:"Ecuación de los espejos", formula:"\\frac{1}{p} + \\frac{1}{q} = \\frac{1}{f}", note:"", vars:"p: distancia objeto · q: distancia imagen · f: distancia focal"},
+  {id:"u2-5", unit:"U2", name:"Ecuación del aumento lateral", formula:"M = \\frac{h'}{h} = -\\frac{q}{p}", note:"", vars:"M: aumento · h': altura imagen · h: altura objeto"},
+  {id:"u2-6", unit:"U2", name:"Distancia focal según radio (espejo cóncavo)", formula:"f = \\frac{R}{2}", note:"Base de la variación para el espejo convexo.", vars:"R: radio de curvatura"},
+  {id:"u2-7", unit:"U2", name:"Distancia focal — espejo convexo", formula:"f = -\\frac{R}{2}", note:"Variación de f = R/2, con signo negativo por convención.", vars:""},
+  {id:"u2-8", unit:"U2", name:"Ley de Reflexión", formula:"\\theta_{incidente} = \\theta_{reflejado}", note:"", vars:""},
+  {id:"u2-9", unit:"U2", name:"Ley de Snell (refracción)", formula:"n_1 \\cdot \\text{sen}(\\theta_1) = n_2 \\cdot \\text{sen}(\\theta_2)", note:"", vars:"n₁, n₂: índices de refracción"},
+  {id:"u2-10", unit:"U2", name:"Índice de refracción y velocidad de la luz", formula:"n = \\frac{c}{v}", note:"", vars:"n: índice de refracción · c: vel. de la luz en el vacío · v: vel. en el medio"},
+  {id:"u2-11", unit:"U2", name:"Ángulo crítico (reflexión interna total)", formula:"\\text{sen}(\\theta_c) = \\frac{n_2}{n_1} \\quad (n_1 > n_2)", note:"Es la Ley de Snell en el caso límite en que el rayo refractado sale a 90°.", vars:"θc: ángulo crítico"},
+  {id:"u2-12", unit:"U2", name:"Desviación en lámina de caras paralelas", formula:"d = \\frac{h \\cdot \\text{sen}(\\theta_1-\\theta_2)}{\\cos(\\theta_2)}", note:"", vars:"d: desviación · h: espesor de la lámina"},
+
+  // Unidad 3.1
+  {id:"u3-1", unit:"U3", name:"Velocidad media (MRU)", formula:"v = \\frac{\\Delta x}{\\Delta t}", note:"", vars:"v: velocidad · Δx: desplazamiento · Δt: tiempo"},
+  {id:"u3-2", unit:"U3", name:"Aceleración", formula:"a = \\frac{v-v_0}{t}", note:"", vars:"a: aceleración · v₀: velocidad inicial"},
+  {id:"u3-3", unit:"U3", name:"Posición (MRUV)", formula:"x = x_0 + v_0 \\cdot t + \\frac{1}{2}\\cdot a \\cdot t^2", note:"", vars:"x₀: posición inicial"},
+  {id:"u3-4", unit:"U3", name:"Velocidad (MRUV)", formula:"v = v_0 + a \\cdot t", note:"", vars:""},
+  {id:"u3-5", unit:"U3", name:"Desplazamiento (vector)", formula:"\\vec{d} = x_f - x_i", note:"", vars:"x_f, x_i: posición final e inicial"},
+  {id:"u3-6", unit:"U3", name:"Perímetro de una circunferencia", formula:"P = 2 \\cdot \\pi \\cdot r", note:"La distancia recorrida en medio círculo: d = π·r.", vars:"r: radio"},
+  {id:"u3-7", unit:"U3", name:"Componentes de la velocidad inicial (Tiro Oblicuo)", formula:"v_{0x} = v_0 \\cdot \\cos(\\theta) \\qquad v_{0y} = v_0 \\cdot \\text{sen}(\\theta)", note:"", vars:""},
+  {id:"u3-8", unit:"U3", name:"Posición horizontal — Tiro Oblicuo", formula:"x = v_{0x} \\cdot t", note:"Variación de x = x₀ + v₀t (MRU aplicado al eje x, sin aceleración horizontal).", vars:""},
+  {id:"u3-9", unit:"U3", name:"Velocidad vertical — Tiro Oblicuo", formula:"v_y = v_{0y} - g \\cdot t", note:"Variación de v = v₀ + at.", vars:"g: aceleración de la gravedad"},
+  {id:"u3-10", unit:"U3", name:"Posición vertical — Tiro Oblicuo", formula:"y = y_0 + v_{0y}\\cdot t - \\frac{1}{2}\\cdot g \\cdot t^2", note:"Variación de x = x₀ + v₀t + ½at².", vars:""},
+  {id:"u3-11", unit:"U3", name:"Frecuencia", formula:"f = \\frac{\\text{vueltas}}{\\text{tiempo}}", note:"", vars:""},
+  {id:"u3-12", unit:"U3", name:"Velocidad angular", formula:"\\omega = 2 \\cdot \\pi \\cdot f", note:"", vars:"ω: velocidad angular"},
+  {id:"u3-13", unit:"U3", name:"Ángulo girado", formula:"\\theta = \\text{vueltas} \\times 2\\pi", note:"", vars:""},
+  {id:"u3-14", unit:"U3", name:"Arco recorrido", formula:"s = \\theta \\cdot r", note:"Relación ángulo-radio.", vars:"s: arco · r: radio"},
+  {id:"u3-15", unit:"U3", name:"Velocidad tangencial", formula:"v_t = \\omega \\cdot r", note:"", vars:""},
+  {id:"u3-16", unit:"U3", name:"Aceleración centrípeta", formula:"a_c = \\frac{v_t^2}{r} = \\omega^2 \\cdot r", note:"", vars:""},
+  {id:"u3-17", unit:"U3", name:"Velocidad relativa", formula:"v_{A/B} = v_A - v_B", note:"Composición de velocidades.", vars:""},
+
+  // Unidad 4
+  {id:"u4-1", unit:"U4", name:"Segunda Ley de Newton", formula:"F = m \\cdot a", note:"Base de toda la unidad de dinámica.", vars:"F: fuerza neta · m: masa · a: aceleración"},
+  {id:"u4-2", unit:"U4", name:"Peso", formula:"P = m \\cdot g", note:"", vars:"P: peso"},
+  {id:"u4-3", unit:"U4", name:"Componentes del peso en plano inclinado", formula:"P_x = m\\cdot g \\cdot \\text{sen}(\\theta) \\qquad P_y = m \\cdot g \\cdot \\cos(\\theta)", note:"Variación trigonométrica del peso.", vars:""},
+  {id:"u4-4", unit:"U4", name:"Fuerza de rozamiento", formula:"f_r = \\mu \\cdot N", note:"", vars:"μ: coeficiente de rozamiento · N: normal"},
+  {id:"u4-5", unit:"U4", name:"Aceleración en plano inclinado con rozamiento", formula:"a = g \\cdot [\\text{sen}(\\theta) - \\mu \\cdot \\cos(\\theta)]", note:"Combinación de F=ma, Pₓ, P_y y f_r.", vars:""},
+  {id:"u4-6", unit:"U4", name:"Sistema con polea en plano inclinado", formula:"a = \\frac{P_1 - P_{2x}}{m_1+m_2} \\qquad T = P_1 - m_1 \\cdot a", note:"Sale de sumar las ecuaciones de Newton de cada cuerpo (la T se cancela).", vars:"T: tensión"},
+  {id:"u4-7", unit:"U4", name:"Aceleración centrípeta desde el ángulo (péndulo cónico)", formula:"a_c = g \\cdot \\tan(\\theta)", note:"Sale de dividir Tₓ=m·a_c sobre T_y=m·g.", vars:""},
+];
+
+const UNIT_NAMES = {U1:"U1 · Mediciones", U2:"U2 · Óptica", U3:"U3 · Cinemática", U4:"U4 · Dinámica"};
+
+/* ======================= PROGRESO ======================= */
+const STORAGE_KEY = "fisica1_progreso_v1";
+function loadProgress(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  const p = {};
+  FORMULAS.forEach(f => p[f.id] = {seen:0, correct:0, wrong:0, weight:3});
+  return p;
+}
+let progress = loadProgress();
+FORMULAS.forEach(f => { if(!progress[f.id]) progress[f.id] = {seen:0, correct:0, wrong:0, weight:3}; });
+function saveProgress(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); }
+
+/* ======================= ESTADO ======================= */
+let mode = "flash";
+let activeUnits = new Set(["U1","U2","U3","U4"]);
+let current = null;
+
+const stageEl = document.getElementById("stage");
+const statsEl = document.getElementById("stats");
+const unitFilterEl = document.getElementById("unitFilter");
+
+/* ======================= UI: tabs y filtro ======================= */
+document.querySelectorAll(".tab-btn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    mode = btn.dataset.mode;
+    document.querySelectorAll(".tab-btn").forEach(b=>b.classList.toggle("active", b===btn));
+    nextRound();
+  });
+});
+document.querySelector('.tab-btn[data-mode="flash"]').classList.add("active");
+
+Object.keys(UNIT_NAMES).forEach(u=>{
+  const chip = document.createElement("button");
+  chip.className = "chip active";
+  chip.textContent = UNIT_NAMES[u];
+  chip.dataset.unit = u;
+  chip.addEventListener("click", ()=>{
+    if(activeUnits.has(u)){
+      if(activeUnits.size===1) return; // al menos una unidad activa
+      activeUnits.delete(u);
+      chip.classList.remove("active");
+    } else {
+      activeUnits.add(u);
+      chip.classList.add("active");
+    }
+    nextRound();
+  });
+  unitFilterEl.appendChild(chip);
+});
+
+document.getElementById("resetProgress").addEventListener("click", (e)=>{
+  e.preventDefault();
+  if(confirm("¿Reiniciar todo el progreso guardado?")){
+    localStorage.removeItem(STORAGE_KEY);
+    progress = loadProgress();
+    nextRound();
+  }
+});
+
+/* ======================= helpers ======================= */
+function pool(){
+  return FORMULAS.filter(f => activeUnits.has(f.unit));
+}
+
+// elige una tarjeta con más probabilidad si tiene peso alto (le cuesta más)
+function pickWeighted(exclude){
+  const items = pool().filter(f => f.id !== (exclude && exclude.id));
+  const source = items.length ? items : pool();
+  const weights = source.map(f => progress[f.id].weight || 1);
+  const total = weights.reduce((a,b)=>a+b,0);
+  let r = Math.random()*total;
+  for(let i=0;i<source.length;i++){
+    r -= weights[i];
+    if(r<=0) return source[i];
+  }
+  return source[source.length-1];
+}
+
+function sample(arr, n, excludeId){
+  const filtered = arr.filter(f=>f.id!==excludeId);
+  const shuffled = [...filtered].sort(()=>Math.random()-0.5);
+  return shuffled.slice(0, n);
+}
+
+function renderMath(el){
+  el.querySelectorAll("[data-tex]").forEach(node=>{
+    try{
+      katex.render(node.dataset.tex, node, {throwOnError:false});
+    }catch(e){}
+  });
+}
+
+function markResult(id, ok){
+  const p = progress[id];
+  p.seen++;
+  if(ok){
+    p.correct++;
+    p.weight = Math.max(1, p.weight - 1);
+  } else {
+    p.wrong++;
+    p.weight = Math.min(8, p.weight + 2);
+  }
+  saveProgress();
+  renderStats();
+}
+
+function renderStats(){
+  const items = pool();
+  let seen=0, correct=0;
+  items.forEach(f=>{ seen += progress[f.id].seen; correct += progress[f.id].correct; });
+  const mastered = items.filter(f => progress[f.id].correct >= 2 && progress[f.id].weight <= 2).length;
+  statsEl.innerHTML = `
+    <span><b>${items.length}</b> fórmulas activas</span>
+    <span><b>${mastered}</b> dominadas</span>
+    <span><b>${seen ? Math.round(100*correct/seen) : 0}%</b> aciertos</span>
+  `;
+}
+
+/* ======================= MODOS ======================= */
+
+function nextRound(){
+  renderStats();
+  if(mode==="flash") return renderFlash();
+  if(mode==="quiz-formula") return renderQuizFormula();
+  if(mode==="quiz-name") return renderQuizName();
+  if(mode==="type") return renderType();
+}
+
+/* --- Flashcards --- */
+function renderFlash(){
+  current = pickWeighted(current);
+  const f = current;
+  stageEl.innerHTML = `
+    <span class="prompt-tag">${UNIT_NAMES[f.unit]}</span>
+    <div class="prompt-name">${f.name}</div>
+    <div class="flip-hint">Pensá la fórmula… y dala vuelta.</div>
+    <button class="btn primary" id="flipBtn">🔄 Mostrar fórmula</button>
+    <div id="revealArea"></div>
+  `;
+  document.getElementById("flipBtn").addEventListener("click", ()=>{
+    const area = document.getElementById("revealArea");
+    area.innerHTML = `
+      <div class="reveal">
+        <div class="formula-big" data-tex="${escapeAttr(f.formula)}"></div>
+        ${f.vars ? `<div class="note">${f.vars}</div>` : ""}
+        ${f.note ? `<div class="note">${f.note}</div>` : ""}
+        <div class="row" style="margin-top:8px;">
+          <button class="btn bad" id="noSabia">😵 No sabía</button>
+          <button class="btn good" id="siSabia">✅ La sabía</button>
+        </div>
+      </div>
+    `;
+    renderMath(area);
+    document.getElementById("flipBtn").remove();
+    document.getElementById("noSabia").addEventListener("click", ()=>{ markResult(f.id, false); nextRound(); });
+    document.getElementById("siSabia").addEventListener("click", ()=>{ markResult(f.id, true); nextRound(); });
+  });
+}
+
+/* --- Quiz: dado el nombre, elegí la fórmula correcta --- */
+function renderQuizFormula(){
+  current = pickWeighted(current);
+  const f = current;
+  const distractors = sample(pool(), 3, f.id);
+  const options = [f, ...distractors].sort(()=>Math.random()-0.5);
+
+  stageEl.innerHTML = `
+    <span class="prompt-tag">${UNIT_NAMES[f.unit]}</span>
+    <div class="prompt-name">${f.name}</div>
+    <div class="choices" id="choicesArea"></div>
+  `;
+  const area = document.getElementById("choicesArea");
+  options.forEach(opt=>{
+    const div = document.createElement("div");
+    div.className = "choice";
+    div.innerHTML = `<span data-tex="${escapeAttr(opt.formula)}"></span>`;
+    div.addEventListener("click", ()=>{
+      const ok = opt.id === f.id;
+      document.querySelectorAll(".choice").forEach(c=>c.classList.add("disabled"));
+      div.classList.add(ok ? "correct" : "wrong");
+      if(!ok){
+        const correctEl = [...document.querySelectorAll(".choice")][options.indexOf(f)];
+        correctEl.classList.add("correct");
+      }
+      markResult(f.id, ok);
+      setTimeout(nextRound, ok ? 700 : 1400);
+    });
+    area.appendChild(div);
+  });
+  renderMath(area);
+}
+
+/* --- Quiz: dada la fórmula, elegí el nombre correcto --- */
+function renderQuizName(){
+  current = pickWeighted(current);
+  const f = current;
+  const distractors = sample(pool(), 3, f.id);
+  const options = [f, ...distractors].sort(()=>Math.random()-0.5);
+
+  stageEl.innerHTML = `
+    <span class="prompt-tag">${UNIT_NAMES[f.unit]}</span>
+    <div class="prompt-formula" data-tex="${escapeAttr(f.formula)}"></div>
+    <div class="choices" id="choicesArea"></div>
+  `;
+  renderMath(stageEl);
+  const area = document.getElementById("choicesArea");
+  options.forEach(opt=>{
+    const div = document.createElement("div");
+    div.className = "choice";
+    div.textContent = opt.name;
+    div.addEventListener("click", ()=>{
+      const ok = opt.id === f.id;
+      document.querySelectorAll(".choice").forEach(c=>c.classList.add("disabled"));
+      div.classList.add(ok ? "correct" : "wrong");
+      if(!ok){
+        const correctEl = [...document.querySelectorAll(".choice")][options.indexOf(f)];
+        correctEl.classList.add("correct");
+      }
+      markResult(f.id, ok);
+      setTimeout(nextRound, ok ? 700 : 1400);
+    });
+    area.appendChild(div);
+  });
+}
+
+/* --- Escribí la fórmula (texto libre, comparación flexible) --- */
+function normalizeFormulaText(s){
+  return s
+    .toLowerCase()
+    .replace(/\\text\{[^}]*\}/g, m => m.replace(/\\text\{|\}/g,""))
+    .replace(/\\cdot|\\times/g, "*")
+    .replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, "($1)/($2)")
+    .replace(/\\sqrt\{([^}]*)\}/g, "sqrt($1)")
+    .replace(/[\\{}]/g, "")
+    .replace(/\s+/g, "")
+    .replace(/°/g, "");
+}
+
+function renderType(){
+  current = pickWeighted(current);
+  const f = current;
+  stageEl.innerHTML = `
+    <span class="prompt-tag">${UNIT_NAMES[f.unit]}</span>
+    <div class="prompt-name">${f.name}</div>
+    <input type="text" class="type-input" id="typeInput" placeholder="Escribí la fórmula (ej: F = m * a)" autocomplete="off">
+    <div class="type-hint">No hace falta LaTeX: usá *, /, ^, sen(), cos(), tan(), sqrt(). Se compara de forma flexible.</div>
+    <div class="row">
+      <button class="btn primary" id="checkBtn">Comprobar</button>
+    </div>
+    <div id="typeResult"></div>
+  `;
+  const input = document.getElementById("typeInput");
+  input.focus();
+  const check = ()=>{
+    const userVal = normalizeFormulaText(input.value);
+    const correctVal = normalizeFormulaText(f.formula);
+    // comparación tolerante: iguales, o el string del usuario está contenido normalizado
+    const ok = userVal.length>0 && (userVal === correctVal || correctVal.includes(userVal) && userVal.length >= correctVal.length*0.6);
+    const result = document.getElementById("typeResult");
+    result.innerHTML = `
+      <div class="reveal">
+        <div class="feedback ${ok ? "good":"bad"}">${ok ? "✅ ¡Correcto!" : "❌ No coincide del todo"}</div>
+        <div class="formula-big" data-tex="${escapeAttr(f.formula)}"></div>
+        ${f.vars ? `<div class="note">${f.vars}</div>` : ""}
+        <button class="btn ${ok?'good':'primary'}" id="continueBtn">Siguiente →</button>
+      </div>
+    `;
+    renderMath(result);
+    document.getElementById("checkBtn").remove();
+    input.disabled = true;
+    markResult(f.id, ok);
+    document.getElementById("continueBtn").addEventListener("click", nextRound);
+  };
+  document.getElementById("checkBtn").addEventListener("click", check);
+  input.addEventListener("keydown", e=>{ if(e.key==="Enter") check(); });
+}
+
+function escapeAttr(s){
+  return s.replace(/&/g,"&amp;").replace(/"/g,"&quot;");
+}
+
+/* ======================= INIT ======================= */
+nextRound();
+</script>
+</body>
+</html>
