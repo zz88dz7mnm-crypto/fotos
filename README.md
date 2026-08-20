@@ -4,13 +4,31 @@ Dos piezas del mismo sistema:
 
 - **`index.html`** — el revelador: subís una foto, la ajustás con los sliders y la descargás.
 - **`diario.html`** — el muro: dos páginas en un mismo documento.
-  - El link limpio es **solo el collage**: fotos de punta a punta, sin marcos ni
-    texto, en filas justificadas que llenan el ancho exacto sin huecos.
-  - El mismo link con **`#subir`** al final es la página de carga.
+  - **Solo el collage**: fotos de punta a punta, sin marcos ni texto, en filas
+    justificadas que llenan el ancho exacto sin huecos.
+  - **La carga**: la página para sumar fotos.
 
-  Publicado como artifact con estado compartido, así que las fotos que suma
-  cualquiera llegan a todas las vistas abiertas. Abierto como archivo suelto
-  funciona igual, guardando en el navegador.
+  Qué página se ve lo decide la URL — vale la ruta, la query o el fragmento:
+
+  | URL | Página |
+  |---|---|
+  | `/muro` · `/diario.html` | el collage |
+  | `/subir` · `?subir` · `#subir` | la carga |
+
+## Desplegar en Vercel
+
+Es HTML estático, sin build ni dependencias. Conectás el repo y listo; el
+`vercel.json` deja las rutas limpias:
+
+| ruta | qué es |
+|---|---|
+| `/` | el revelador |
+| `/muro` | el collage |
+| `/subir` | la carga |
+
+**Ojo:** servido desde Vercel el muro **no es compartido** — las fotos quedan
+en el navegador de cada persona. El muro colectivo necesita la capability del
+artifact de Claude, o un backend propio.
 
 ---
 

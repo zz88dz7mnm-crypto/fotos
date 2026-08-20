@@ -163,8 +163,9 @@
 
   /* ---- qué página es esta: el muro o la carga ---- */
   function modo(){
-    const h = (location.hash || "") + (location.search || "");
-    return /subir|cargar/i.test(h) ? "carga" : "muro";
+    // sirve la ruta (/subir en Vercel), la query (?subir) y el fragmento (#subir)
+    const url = (location.pathname || "") + (location.search || "") + (location.hash || "");
+    return /(^|[\/?#&])(subir|cargar)\b/i.test(url) ? "carga" : "muro";
   }
   function aplicarModo(){ document.body.dataset.mode = modo(); }
   aplicarModo();
