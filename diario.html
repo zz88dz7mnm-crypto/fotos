@@ -1,0 +1,522 @@
+<title>Diario Golden Coast</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --sand:#e9e4da;
+    --sand-2:#e0dacd;
+    --card:#fbf9f5;
+    --ink:#2a2e2b;
+    --muted:#7c8177;
+    --line:#cfc8b9;
+    --sol:#c07a1e;
+    --sol-soft:rgba(217,143,43,.14);
+    --mar:#3f5b52;
+    --shadow:rgba(58,52,38,.16);
+
+    --display:"Bricolage Grotesque","Hanken Grotesk",system-ui,sans-serif;
+    --body:"Hanken Grotesk",system-ui,-apple-system,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+
+    --page:min(1180px,92vw);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --sand:#1a1d1b;
+      --sand-2:#212523;
+      --card:#282c29;
+      --ink:#e8e4da;
+      --muted:#949a8e;
+      --line:#3a403b;
+      --sol:#e5a84e;
+      --sol-soft:rgba(229,168,78,.16);
+      --mar:#8fb3a4;
+      --shadow:rgba(0,0,0,.45);
+    }
+  }
+  :root[data-theme="dark"]{
+    --sand:#1a1d1b;
+    --sand-2:#212523;
+    --card:#282c29;
+    --ink:#e8e4da;
+    --muted:#949a8e;
+    --line:#3a403b;
+    --sol:#e5a84e;
+    --sol-soft:rgba(229,168,78,.16);
+    --mar:#8fb3a4;
+    --shadow:rgba(0,0,0,.45);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--sand);
+    color:var(--ink);
+    font-family:var(--body);
+    font-size:16px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* luz de las seis de la tarde entrando por un costado */
+  .light{
+    position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(70% 50% at 88% 4%, var(--sol-soft), transparent 70%),
+      radial-gradient(50% 40% at 4% 96%, rgba(63,91,82,.09), transparent 70%);
+  }
+  .page{position:relative;z-index:1;width:var(--page);margin:0 auto;padding:64px 0 96px}
+
+  /* ---------------- cabecera ---------------- */
+  .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--muted);margin:0 0 20px;
+  }
+  h1{
+    font-family:var(--display);
+    font-size:clamp(40px,7vw,76px);
+    font-weight:800;line-height:.98;letter-spacing:-.035em;
+    margin:0 0 18px;text-wrap:balance;max-width:14ch;
+  }
+  h1 .b{display:block;font-weight:400;color:var(--muted)}
+  .lede{margin:0;max-width:56ch;color:var(--muted);font-size:17px}
+
+  /* ---------------- subir ---------------- */
+  .uploader{margin:48px 0 12px}
+  .drop{
+    display:block;width:100%;text-align:left;cursor:pointer;
+    background:transparent;color:inherit;font:inherit;
+    border:1.5px dashed var(--line);border-radius:2px;
+    padding:30px 32px;
+    display:flex;align-items:center;gap:22px;flex-wrap:wrap;
+    transition:border-color .2s ease,background .2s ease;
+  }
+  .drop:hover,.drop.over{border-color:var(--sol);background:var(--sol-soft)}
+  .drop:focus-visible{outline:2px solid var(--sol);outline-offset:3px}
+  .drop .dot{
+    width:34px;height:34px;border-radius:50%;flex:none;
+    border:1.5px solid var(--sol);
+    display:grid;place-items:center;color:var(--sol);font-size:17px;line-height:1;
+  }
+  .drop .t{display:block;font-family:var(--display);font-size:19px;font-weight:600;letter-spacing:-.01em}
+  .drop .s{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+  .drop .grow{flex:1;min-width:0}
+  input[type=file]{display:none}
+
+  .status{
+    font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--sol);min-height:20px;margin-top:14px;
+  }
+  .note{
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+    color:var(--muted);margin-top:14px;line-height:1.8;
+  }
+
+  /* ---------------- galería ---------------- */
+  .strip{
+    display:flex;align-items:center;gap:18px;
+    margin:64px 0 34px;
+  }
+  .strip h2{
+    font-family:var(--mono);font-size:11px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--muted);font-weight:400;margin:0;
+  }
+  .strip .hr{flex:1;height:1px;background:var(--line)}
+
+  #gallery{columns:3;column-gap:30px}
+  @media (max-width:900px){#gallery{columns:2}}
+  @media (max-width:560px){#gallery{columns:1}}
+
+  .polaroid{
+    break-inside:avoid;margin:0 0 30px;
+    background:var(--card);
+    padding:13px 13px 0;
+    box-shadow:0 2px 3px var(--shadow),0 14px 34px -14px var(--shadow);
+    transform:rotate(var(--r,0deg));
+    transition:transform .3s cubic-bezier(.2,.7,.3,1),box-shadow .3s ease;
+  }
+  .polaroid:hover{
+    transform:rotate(0deg) translateY(-4px);
+    box-shadow:0 3px 4px var(--shadow),0 22px 46px -16px var(--shadow);
+  }
+  .polaroid img{display:block;width:100%;height:auto;background:var(--sand-2)}
+  .polaroid figcaption{
+    display:flex;align-items:baseline;gap:12px;
+    padding:14px 3px 20px;
+  }
+  .cap{
+    font-family:var(--mono);font-size:12px;color:var(--ink);
+    flex:1;min-width:0;outline:none;border-bottom:1px solid transparent;
+  }
+  .cap:focus{border-bottom-color:var(--sol)}
+  .cap:empty::before{content:"sin título";color:var(--muted)}
+  .frame{
+    font-family:var(--mono);font-size:11px;color:var(--muted);
+    flex:none;font-variant-numeric:tabular-nums;
+  }
+
+  #empty{
+    border:1px solid var(--line);padding:56px 32px;text-align:center;
+    color:var(--muted);
+  }
+  #empty .big{font-family:var(--display);font-size:22px;color:var(--ink);margin-bottom:8px}
+  #empty .sm{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+
+  footer{
+    margin-top:80px;padding-top:26px;border-top:1px solid var(--line);
+    font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted);
+    display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  }
+
+  [artifact-sync-state="off"] .cap{border-bottom-color:transparent}
+
+  @media (prefers-reduced-motion:reduce){
+    .polaroid{transition:none}
+    .polaroid:hover{transform:rotate(var(--r,0deg))}
+  }
+</style>
+
+<div class="light"></div>
+
+<div class="page">
+
+  <header>
+    <p class="eyebrow">Golden Coast · diario compartido</p>
+    <h1>El verano<span class="b">que no termina</span></h1>
+    <p class="lede">
+      Subí una foto y sale sola con la vibra: luz de las seis, grano fino,
+      colores un poco lavados. No hay filtros que elegir ni nada que editar.
+      Quien tenga el link puede sumar la suya.
+    </p>
+  </header>
+
+  <artifact-local>
+    <div class="uploader">
+      <button type="button" class="drop" id="drop">
+        <span class="dot" aria-hidden="true">+</span>
+        <span class="grow">
+          <span class="t" id="dropTitle">Sumá una foto al diario</span>
+          <span class="s" id="dropSub">Arrastrala acá o tocá para elegirla</span>
+        </span>
+      </button>
+      <input type="file" id="file" accept="image/*" multiple>
+      <p class="status" id="status"></p>
+      <p class="note" id="note"></p>
+    </div>
+  </artifact-local>
+
+  <div class="strip">
+    <h2 id="rollLabel">El rollo</h2>
+    <span class="hr"></span>
+  </div>
+
+  <div id="empty">
+    <div class="big">Todavía no hay nada acá</div>
+    <div class="sm">la primera foto arranca el rollo</div>
+  </div>
+
+  <div id="gallery"></div>
+
+  <footer>
+    <span>Golden Coast · diario fotográfico</span>
+    <span>golden hour en todo</span>
+  </footer>
+
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const $ = id => document.getElementById(id);
+  const dropEl = $("drop"), fileEl = $("file"), statusEl = $("status"),
+        noteEl = $("note"), galleryEl = $("gallery"), emptyEl = $("empty"),
+        dropTitle = $("dropTitle"), dropSub = $("dropSub");
+
+  const MAX_EDGE = 1100;      // el diario vive dentro de la página: fotos livianas
+  const QUALITY  = 0.72;
+
+  let shared = null;          // namespace de la capability, o null
+  let readOnly = false;
+
+  /* ==========================================================
+     EL FILTRO — el mismo revelado de carrete, un punto más dorado
+     ========================================================== */
+  const CH = {
+    r:{ lift:0.030, gain:1.000, gamma:1.00 },
+    g:{ lift:0.028, gain:0.994, gamma:1.00 },
+    b:{ lift:0.055, gain:0.968, gamma:0.99 }
+  };
+  const SHOULDER = 0.78, SHOULDER_K = 1.35, CONTRAST = 0.96;
+
+  function buildLUT(c){
+    const lut = new Float32Array(256);
+    const norm = 1 - Math.exp(-SHOULDER_K);
+    for (let i = 0; i < 256; i++){
+      let x = Math.pow(i/255, c.gamma);
+      if (x > SHOULDER){
+        const t = (x - SHOULDER)/(1 - SHOULDER);
+        x = SHOULDER + (1 - SHOULDER)*(1 - Math.exp(-SHOULDER_K*t))/norm;
+      }
+      x = (x - 0.5)*CONTRAST + 0.5;
+      x = c.lift + (c.gain - c.lift)*x;
+      lut[i] = x < 0 ? 0 : x > 1 ? 1 : x;
+    }
+    return lut;
+  }
+  const LR = buildLUT(CH.r), LG = buildLUT(CH.g), LB = buildLUT(CH.b);
+
+  function grade(data){
+    const WB_R = 1.012, WB_G = 1.004, WB_B = 0.982;
+    for (let i = 0; i < data.length; i += 4){
+      let r = LR[Math.min(255,(data[i]  *WB_R)|0)];
+      let g = LG[Math.min(255,(data[i+1]*WB_G)|0)];
+      let b = LB[Math.min(255,(data[i+2]*WB_B)|0)];
+
+      const L = 0.2126*r + 0.7152*g + 0.0722*b;
+      const sw = (1-L)*(1-L), hw = L*L, mw = 4*L*(1-L);
+
+      r += -0.016*sw + 0.038*hw + 0.009*mw;
+      g +=  0.005*sw + 0.013*hw + 0.003*mw;
+      b +=  0.024*sw - 0.034*hw - 0.007*mw;
+
+      const sat = (b > r && b > g) ? 0.98 : 0.90;
+      const lum = 0.2126*r + 0.7152*g + 0.0722*b;
+      r = lum + (r-lum)*sat; g = lum + (g-lum)*sat; b = lum + (b-lum)*sat;
+
+      data[i]   = r < 0 ? 0 : r > 1 ? 255 : r*255;
+      data[i+1] = g < 0 ? 0 : g > 1 ? 255 : g*255;
+      data[i+2] = b < 0 ? 0 : b > 1 ? 255 : b*255;
+    }
+  }
+
+  function halation(ctx, w, h){
+    const src = ctx.getImageData(0,0,w,h), hi = ctx.createImageData(w,h);
+    const s = src.data, d = hi.data;
+    for (let i = 0; i < s.length; i += 4){
+      const lum = (0.2126*s[i] + 0.7152*s[i+1] + 0.0722*s[i+2])/255;
+      const m = lum > 0.74 ? (lum - 0.74)/0.26 : 0;
+      d[i] = 255*m; d[i+1] = 140*m; d[i+2] = 60*m; d[i+3] = 255;
+    }
+    const tmp = document.createElement("canvas");
+    tmp.width = w; tmp.height = h;
+    tmp.getContext("2d").putImageData(hi,0,0);
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    ctx.globalAlpha = 0.20;
+    ctx.filter = `blur(${Math.max(4, Math.round(Math.min(w,h)*0.016))}px)`;
+    ctx.drawImage(tmp,0,0);
+    ctx.restore(); ctx.filter = "none";
+  }
+
+  // el toque sol/terracota del concepto, muy leve
+  function sunTint(ctx, w, h){
+    ctx.save();
+    ctx.globalCompositeOperation = "soft-light";
+    const g = ctx.createLinearGradient(0,0,w,h);
+    g.addColorStop(0, "rgba(232,163,61,.24)");
+    g.addColorStop(1, "rgba(193,85,47,.14)");
+    ctx.fillStyle = g; ctx.fillRect(0,0,w,h);
+    ctx.restore();
+  }
+
+  function grainVignette(data, w, h){
+    const cx = w/2, cy = h/2, maxR2 = cx*cx + cy*cy;
+    for (let y = 0; y < h; y++){
+      const dy = y - cy, dy2 = dy*dy;
+      for (let x = 0; x < w; x++){
+        const i = (y*w + x)*4;
+        let r = data[i], g = data[i+1], b = data[i+2];
+        const dx = x - cx, rr = (dx*dx + dy2)/maxR2;
+        const v = 1 - 0.13*rr*rr;
+        r *= v; g *= v; b *= v;
+        const lum = (0.2126*r + 0.7152*g + 0.0722*b)/255;
+        const n = (Math.random() - 0.5) * 6.2 * (1 + 1.6*(1 - lum));
+        r += n; g += n; b += n;
+        data[i]   = r < 0 ? 0 : r > 255 ? 255 : r;
+        data[i+1] = g < 0 ? 0 : g > 255 ? 255 : g;
+        data[i+2] = b < 0 ? 0 : b > 255 ? 255 : b;
+      }
+    }
+  }
+
+  async function revelar(file){
+    let bmp;
+    try {
+      bmp = await createImageBitmap(file, { imageOrientation:"from-image" });
+    } catch {
+      bmp = await new Promise((res,rej) => {
+        const im = new Image();
+        im.onload = () => res(im); im.onerror = rej;
+        im.src = URL.createObjectURL(file);
+      });
+    }
+    const scale = Math.min(1, MAX_EDGE/Math.max(bmp.width, bmp.height));
+    const w = Math.max(1, Math.round(bmp.width*scale));
+    const h = Math.max(1, Math.round(bmp.height*scale));
+
+    const cv = document.createElement("canvas");
+    cv.width = w; cv.height = h;
+    const ctx = cv.getContext("2d", { willReadFrequently:true });
+    ctx.drawImage(bmp, 0, 0, w, h);
+
+    let img = ctx.getImageData(0,0,w,h);
+    grade(img.data);
+    ctx.putImageData(img,0,0);
+
+    halation(ctx, w, h);
+    sunTint(ctx, w, h);
+
+    img = ctx.getImageData(0,0,w,h);
+    grainVignette(img.data, w, h);
+    ctx.putImageData(img,0,0);
+
+    return cv.toDataURL("image/jpeg", QUALITY);
+  }
+
+  /* ==========================================================
+     GALERÍA
+     ========================================================== */
+  const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+
+  function hoy(){
+    const d = new Date();
+    return `${d.getDate()} ${MESES[d.getMonth()]}`;
+  }
+
+  function nuevaPolaroid(dataUrl, texto, num){
+    const fig = document.createElement("figure");
+    fig.className = "polaroid";
+    fig.style.setProperty("--r", ((Math.random()*3 - 1.5).toFixed(2)) + "deg");
+
+    const img = document.createElement("img");
+    img.src = dataUrl;
+    img.alt = "";
+    img.loading = "lazy";
+
+    const cap = document.createElement("figcaption");
+    const txt = document.createElement("span");
+    txt.className = "cap";
+    txt.textContent = texto;
+    if (!readOnly) txt.setAttribute("contenteditable", "plaintext-only");
+
+    const fr = document.createElement("span");
+    fr.className = "frame";
+    fr.textContent = "#" + String(num).padStart(3, "0");
+
+    cap.append(txt, fr);
+    fig.append(img, cap);
+    return fig;
+  }
+
+  function contar(){ return galleryEl.children.length; }
+
+  /* ---- modo local (abierto como archivo suelto) ---- */
+  const LS = "goldencoast-diario";
+  const leerLocal = () => { try { return JSON.parse(localStorage.getItem(LS)) || []; } catch { return []; } };
+  function guardarLocal(){
+    const fotos = [...galleryEl.children].map(f => ({
+      src: f.querySelector("img").src,
+      cap: f.querySelector(".cap").textContent
+    }));
+    try { localStorage.setItem(LS, JSON.stringify(fotos)); }
+    catch { statusEl.textContent = "no entran más fotos en este navegador"; }
+  }
+
+  async function sumar(files){
+    const lista = [...files].filter(f => f.type.startsWith("image/"));
+    if (!lista.length) return;
+    if (readOnly){
+      statusEl.textContent = "este diario es de solo lectura";
+      return;
+    }
+
+    for (let i = 0; i < lista.length; i++){
+      statusEl.textContent = lista.length > 1
+        ? `revelando ${i+1} de ${lista.length}…` : "revelando…";
+      let dataUrl;
+      try { dataUrl = await revelar(lista[i]); }
+      catch { statusEl.textContent = "esa foto no se pudo abrir"; continue; }
+
+      const fig = nuevaPolaroid(dataUrl, hoy(), contar() + 1);
+
+      const meter = () => {
+        galleryEl.prepend(fig);
+        if (!emptyEl.hidden) emptyEl.hidden = true;
+      };
+
+      if (shared){
+        try {
+          await shared.sync(meter);
+        } catch (err){
+          const code = err && err.code;
+          if (code === "not_writer" || code === "not_granted" || code === "not_declared"){
+            modoSoloLectura();
+            return;
+          }
+          if (code === "too_large"){
+            statusEl.textContent = "el diario está lleno — no entra otra foto";
+            return;
+          }
+          statusEl.textContent = "no se pudo guardar, probá de nuevo";
+          return;
+        }
+      } else {
+        meter();
+        guardarLocal();
+      }
+    }
+    statusEl.textContent = lista.length > 1 ? `${lista.length} fotos al rollo` : "lista";
+    setTimeout(() => { statusEl.textContent = ""; }, 3200);
+  }
+
+  function modoSoloLectura(){
+    readOnly = true;
+    dropEl.hidden = true;
+    statusEl.textContent = "";
+    noteEl.textContent = "Estás viendo el diario de otra persona: podés mirarlo, pero no sumar fotos.";
+    document.querySelectorAll(".cap[contenteditable]").forEach(c => c.removeAttribute("contenteditable"));
+  }
+
+  /* ---- eventos ---- */
+  dropEl.addEventListener("click", () => fileEl.click());
+  fileEl.addEventListener("change", e => { sumar(e.target.files); fileEl.value = ""; });
+
+  ["dragenter","dragover"].forEach(ev =>
+    document.addEventListener(ev, e => { e.preventDefault(); if(!readOnly) dropEl.classList.add("over"); }));
+  ["dragleave","drop"].forEach(ev =>
+    document.addEventListener(ev, e => { e.preventDefault(); dropEl.classList.remove("over"); }));
+  document.addEventListener("drop", e => {
+    if (e.dataTransfer && e.dataTransfer.files.length) sumar(e.dataTransfer.files);
+  });
+
+  galleryEl.addEventListener("keydown", e => {
+    if (e.key === "Enter" && e.target.classList.contains("cap")){
+      e.preventDefault(); e.target.blur();
+    }
+  });
+
+  document.addEventListener("claude:sync-off", () => {
+    noteEl.textContent = "Se cortó la sincronización: lo que sumes ahora lo ves solo vos.";
+  });
+
+  /* ---- arranque ---- */
+  (async () => {
+    shared = (window.claude && window.claude.use) ? await window.claude.use("artifact") : null;
+
+    if (shared){
+      noteEl.textContent = "Diario compartido: quien tenga el link ve estas fotos y puede sumar las suyas.";
+      if (galleryEl.children.length) emptyEl.hidden = true;
+    } else {
+      noteEl.textContent = "Sin conexión al diario compartido: las fotos quedan guardadas solo en este navegador.";
+      const fotos = leerLocal();
+      fotos.forEach((f, i) => galleryEl.append(nuevaPolaroid(f.src, f.cap, fotos.length - i)));
+      if (fotos.length) emptyEl.hidden = true;
+      galleryEl.addEventListener("input", e => {
+        if (e.target.classList.contains("cap")) guardarLocal();
+      });
+    }
+  })();
+})();
+</script>
