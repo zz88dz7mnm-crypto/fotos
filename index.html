@@ -35,8 +35,9 @@
   /* ============================================================
      EL MURO — nada más que fotos, de un costado al otro
      ============================================================ */
-  /* filas justificadas: cada fila llena el ancho exacto, sin huecos ni
-     bordes, y el muro termina en un rectángulo limpio */
+  /* cada foto entera, con su proporcion intacta y sin recortes.
+     Las filas se llenan hasta donde entra: si sobra un pedazo a la
+     derecha, se deja — antes que cortar una foto */
   #wall{
     display:flex;
     flex-wrap:wrap;
@@ -44,15 +45,13 @@
   }
   #wall img{
     display:block;
-    height:clamp(130px,15vw,230px);
+    height:clamp(150px,17vw,260px);
     width:auto;
-    flex:1 1 auto;
-    min-width:90px;
-    object-fit:cover;        /* absorbe el estirado de la fila */
+    flex:0 0 auto;           /* sin estirar: cada foto entera, con su proporcion */
     margin:0;
     border:0;
   }
-  @media (max-width:640px){ #wall img{height:clamp(110px,26vw,170px);min-width:70px} }
+  @media (max-width:640px){ #wall img{height:clamp(120px,28vw,190px)} }
 
   /* el muro ocupa todo; la carga vive aparte */
   body[data-mode="muro"]  #uploader{display:none}
