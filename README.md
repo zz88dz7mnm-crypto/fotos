@@ -1,72 +1,35 @@
 # Golden Coast
 
-Dos piezas del mismo sistema:
+Sitio estático, sin build ni dependencias ni backend. Todo el procesado de
+imagen ocurre en el navegador: las fotos no se suben a ningún servidor.
 
-- **`index.html`** — el revelador: subís una foto, la ajustás con los sliders y la descargás.
-- **`diario.html`** — el muro: dos páginas en un mismo documento.
-  - **Solo el collage**: fotos de punta a punta, sin marcos ni texto, en filas
-    justificadas que llenan el ancho exacto sin huecos.
-  - **La carga**: la página para sumar fotos.
+| ruta | archivo | qué es |
+|---|---|---|
+| `/` · `/muro` | `index.html` | el muro: fotos de punta a punta, sin marcos ni texto |
+| `/subir` | `index.html` | la página para sumar fotos al muro |
+| `/revelador` | `revelador.html` | el revelador: subís, ajustás con sliders y descargás |
 
-  Qué página se ve lo decide la URL — vale la ruta, la query o el fragmento:
+El muro y la carga son el mismo archivo: qué página se ve lo decide la URL —
+vale la ruta (`/subir`), la query (`?subir`) o el fragmento (`#subir`).
 
-  | URL | Página |
-  |---|---|
-  | `/muro` · `/diario.html` | el collage |
-  | `/subir` · `?subir` · `#subir` | la carga |
+## Desplegar
 
-## Desplegar en Vercel
-
-Es HTML estático, sin build ni dependencias. Conectás el repo y listo; el
-`vercel.json` deja las rutas limpias:
-
-| ruta | qué es |
-|---|---|
-| `/` | el revelador |
-| `/muro` | el collage |
-| `/subir` | la carga |
+Conectás el repo a Vercel y listo; el `vercel.json` deja las rutas limpias.
 
 **Ojo:** servido desde Vercel el muro **no es compartido** — las fotos quedan
-en el navegador de cada persona. El muro colectivo necesita la capability del
+en el navegador de cada persona. El muro colectivo necesita la capability de
 artifact de Claude, o un backend propio.
 
 ---
 
-# Revelado 35mm
+# El filtro
 
-Web de una sola página que revela cualquier foto con estética de carrete
-analógico: luz cálida de hora dorada, luces ámbar, sombras con un punto de
-cian, halación y grano fino.
+Un único preset, calibrado para ser **contenido**: mantiene el contraste, los
+negros con cuerpo y la saturación del cielo y el agua.
 
-El filtro está calibrado para ser **contenido**: mantiene el contraste, los
-negros con cuerpo y la saturación del cielo y el agua. La fuga de luz, el
-polvo, el marco y el sello de fecha son extras opcionales, apagados por
-defecto.
-
-**Todo el procesado ocurre en el navegador** — la foto nunca se sube a ningún servidor.
-
-## Uso
-
-Abre `index.html` en el navegador. No hay build, ni dependencias, ni backend.
-
-Arrastra una foto (o pégala con Ctrl+V, o haz clic para elegirla), se revela
-sola y ya puedes descargarla en JPG.
-
-| Control | Qué hace |
-|---|---|
-| **Intensidad** | Mezcla entre el original (0%) y el revelado completo (100%), hasta 150% |
-| **Grano** | Densidad del grano de emulsión |
-| **Ver original** | Compara antes/después |
-| **Fuga de luz** | Mancha ámbar en una esquina + banda cálida en el borde |
-| **Polvo** | Motas y rayas de escaneo |
-| **Marco** | Borde crema de foto impresa |
-| **Fecha** | Sello naranja de cámara compacta, editable |
-
-## El filtro
-
-Un único preset. Lo que le da el carácter de película real son las **curvas
-independientes por canal**: cada canal tiene su propio suelo y su propio techo,
-así que el azul arranca alto y termina bajo — de ahí las sombras cian y las
+Lo que le da el carácter de película real son las **curvas independientes por
+canal**: cada canal tiene su propio suelo y su propio techo, así que el azul
+arranca alto y termina bajo — de ahí las sombras con un punto de cian y las
 luces ámbar, sin tocar el tono manualmente.
 
 | Canal | Suelo | Techo | Gamma |
@@ -81,21 +44,15 @@ Orden de revelado:
    hacia dentro, proporcional al cuadrado de la distancia al centro.
 2. **Curvas por canal** con hombro exponencial en las luces y −4% de contraste.
 3. **Split-toning** — sombras a cian/verde, luces a ámbar, peso cuadrático
-   según luminancia; más un velo sepia en los medios (el papel amarillea).
+   según luminancia; más un velo sepia en los medios.
 4. **Desaturación** al 90%, con los azules al 98% para que el cielo y el agua
    conserven cuerpo.
-5. **Halación** — las luces por encima del 74% sangran en rojo-naranja mediante
-   desenfoque compuesto en `screen`.
-6. **Velo cálido** — neblina lechosa sobre toda la imagen.
-7. **Fuga de luz** desde una esquina, con banda en el borde *(opcional)*.
-8. **Softness** de lente de compacta.
-9. **Polvo y rayas** de escaneo *(opcional)*.
-10. **Grano** de luminancia con pizca de grano de color, más denso en sombras.
-11. **Viñeta** ~−13% en las esquinas.
-12. **Sello de fecha** quemado en modo `lighter` *(opcional)*.
+5. **Halación** — las luces por encima del 74% sangran en rojo-naranja.
+6. **Tinte sol/terracota** en `soft-light`, muy leve.
+7. **Grano** de luminancia, más denso en sombras.
+8. **Viñeta** ~−13% en las esquinas.
 
-El polvo y la fuga usan un PRNG con semilla fija por imagen, así que no bailan
-al mover los sliders.
+El revelador suma además, como extras opcionales: fuga de luz, polvo y rayas
+de escaneo, marco de foto impresa y sello de fecha de cámara compacta.
 
-Las imágenes de más de 3000px en su lado largo se reescalan para el revelado.
 Se respeta la orientación EXIF, así que las fotos de móvil no salen giradas.

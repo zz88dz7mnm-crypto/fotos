@@ -1,7 +1,16 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/muro",  "destination": "/diario.html" },
-    { "source": "/subir", "destination": "/diario.html" }
+    { "source": "/muro",      "destination": "/index.html" },
+    { "source": "/subir",     "destination": "/index.html" },
+    { "source": "/revelador", "destination": "/revelador.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    }
   ]
 }

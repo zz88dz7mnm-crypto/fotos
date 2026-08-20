@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- revelador -->
+<title>Revelado 35mm</title>
+<style>
+  :root{
+    --ink:#0f0d0b;
+    --paper:#1b1815;
+    --paper-2:#232019;
+    --line:#3a332a;
+    --text:#ece0c9;
+    --muted:#9a8f7c;
+    --amber:#d08b3c;
+    --amber-dim:#4a3a20;
+    --cream:#f0e8d8;
+    --serif:Georgia,"Iowan Old Style","Palatino Linotype",Palatino,"Times New Roman",serif;
+    --sans:ui-sans-serif,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--ink);
+    background-image:
+      radial-gradient(120% 80% at 50% -10%, rgba(208,139,60,.13), transparent 60%),
+      radial-gradient(90% 60% at 100% 100%, rgba(120,80,40,.08), transparent 65%);
+    color:var(--text);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    padding:40px 20px 72px;
+    position:relative;
+  }
+  /* grano de papel sobre toda la página */
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:99;opacity:.30;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/><feColorMatrix type='saturate' values='0'/></filter><rect width='160' height='160' filter='url(%23n)' opacity='.5'/></svg>");
+    mix-blend-mode:overlay;
+  }
+  .wrap{max-width:1000px;margin:0 auto;position:relative;z-index:1}
+
+  /* ---------- cabecera ---------- */
+  header{text-align:center;margin-bottom:34px}
+  .kicker{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.34em;
+    text-transform:uppercase;color:var(--amber);margin-bottom:14px;
+  }
+  h1{
+    font-family:var(--serif);font-weight:400;font-style:italic;
+    font-size:clamp(34px,6.5vw,54px);line-height:1;margin:0 0 4px;
+    letter-spacing:-.015em;color:var(--cream);
+  }
+  h1 span{font-style:normal;letter-spacing:.06em;font-size:.62em;color:var(--amber)}
+  .rule{
+    width:180px;margin:18px auto;border:0;border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);height:3px;
+  }
+  .sub{
+    color:var(--muted);font-size:13.5px;line-height:1.75;margin:0 auto;max-width:56ch;
+  }
+
+  /* ---------- dropzone ---------- */
+  #drop{
+    border:1px dashed var(--line);border-radius:3px;background:var(--paper);
+    padding:56px 24px;text-align:center;cursor:pointer;
+    transition:border-color .2s ease,background .2s ease,transform .2s ease;
+    box-shadow:inset 0 0 60px rgba(0,0,0,.35);
+  }
+  #drop:hover,#drop.over{border-color:var(--amber);background:var(--paper-2)}
+  #drop .icon{font-size:26px;margin-bottom:14px;opacity:.65}
+  #drop .big{
+    font-family:var(--serif);font-size:19px;font-style:italic;
+    color:var(--cream);margin-bottom:8px;
+  }
+  #drop .small{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--muted);
+  }
+  input[type=file]{display:none}
+
+  /* ---------- área de trabajo ---------- */
+  #work{display:none;margin-top:26px}
+  #work.on{display:block}
+
+  .stage{
+    position:relative;background:#0b0a08;
+    border:1px solid var(--line);border-radius:3px;
+    padding:16px 30px;display:flex;justify-content:center;align-items:center;
+    min-height:240px;overflow:hidden;
+    box-shadow:inset 0 0 80px rgba(0,0,0,.6);
+  }
+  /* perforaciones de carrete a los lados */
+  .stage::before,.stage::after{
+    content:"";position:absolute;top:0;bottom:0;width:16px;
+    background-image:repeating-linear-gradient(to bottom,
+      transparent 0 9px,rgba(236,224,201,.16) 9px 20px,transparent 20px 29px);
+    background-size:100% 29px;
+  }
+  .stage::before{left:0}
+  .stage::after{right:0}
+
+  canvas{
+    max-width:100%;max-height:70vh;display:block;background:#000;
+    box-shadow:0 10px 40px rgba(0,0,0,.6);
+  }
+  #before{display:none}
+  .stage.compare #after{display:none}
+  .stage.compare #before{display:block}
+
+  .badge{
+    position:absolute;top:24px;left:38px;font-family:var(--mono);
+    font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;
+    background:rgba(11,10,8,.8);padding:6px 10px;color:var(--amber);
+    border:1px solid var(--amber-dim);pointer-events:none;
+  }
+  .busy{
+    position:absolute;inset:0;background:rgba(11,10,8,.9);
+    display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;
+    text-transform:uppercase;color:var(--amber);
+  }
+  .busy.on{display:flex}
+  .busy .dot{
+    width:9px;height:9px;border-radius:50%;background:var(--amber);
+    animation:pulse 1.1s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+
+  /* ---------- controles ---------- */
+  .panel{
+    margin-top:16px;background:var(--paper);border:1px solid var(--line);
+    border-radius:3px;padding:22px 24px;
+  }
+  .sliders{display:grid;gap:22px;grid-template-columns:1fr 1fr}
+  @media (max-width:680px){.sliders{grid-template-columns:1fr}}
+
+  .ctl label{
+    display:flex;justify-content:space-between;align-items:baseline;
+    font-family:var(--mono);font-size:10px;letter-spacing:.2em;
+    text-transform:uppercase;margin-bottom:12px;color:var(--muted);
+  }
+  .ctl label b{color:var(--amber);font-weight:400;font-variant-numeric:tabular-nums}
+  input[type=range]{
+    width:100%;height:1px;appearance:none;background:var(--line);outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    appearance:none;width:13px;height:13px;background:var(--amber);
+    cursor:pointer;border:0;border-radius:50%;
+    box-shadow:0 0 0 4px rgba(208,139,60,.16);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:13px;height:13px;background:var(--amber);cursor:pointer;
+    border:0;border-radius:50%;box-shadow:0 0 0 4px rgba(208,139,60,.16);
+  }
+
+  .divider{height:1px;background:var(--line);margin:22px 0}
+
+  .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  button{
+    font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+    text-transform:uppercase;padding:11px 15px;border-radius:2px;cursor:pointer;
+    border:1px solid var(--line);background:transparent;color:var(--text);
+    transition:border-color .16s ease,color .16s ease,background .16s ease;
+  }
+  button:hover{border-color:var(--muted)}
+  button[aria-pressed=true]{border-color:var(--amber);color:var(--amber);background:rgba(208,139,60,.09)}
+  button.primary{background:var(--amber);color:#1a1206;border-color:var(--amber);font-weight:700}
+  button.primary:hover{background:#e09a48;border-color:#e09a48}
+  .spacer{flex:1}
+
+  #stampText{
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;width:104px;
+    padding:10px;background:var(--ink);color:var(--amber);
+    border:1px solid var(--line);border-radius:2px;outline:none;
+  }
+  #stampText:focus{border-color:var(--amber)}
+  #stampText[hidden]{display:none}
+
+  .meta{
+    font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);margin-top:16px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">Kodak · Fuji · Superia 400</div>
+    <h1>Revelado <span>35 MM</span></h1>
+    <hr class="rule">
+    <p class="sub">
+      Sube cualquier foto y sale revelada en carrete: luz cálida de hora dorada,
+      luces ámbar, sombras con un punto de cian, halación y grano fino.
+      Todo ocurre en tu navegador — la imagen no se sube a ningún sitio.
+    </p>
+  </header>
+
+  <div id="drop" tabindex="0" role="button" aria-label="Cargar imagen">
+    <div class="icon">◐</div>
+    <div class="big">Arrastra una foto aquí</div>
+    <div class="small">o pulsa para elegirla · jpg · png · webp · heic</div>
+  </div>
+  <input type="file" id="file" accept="image/*">
+
+  <section id="work">
+    <div class="stage" id="stage">
+      <canvas id="after"></canvas>
+      <canvas id="before"></canvas>
+      <span class="badge" id="badge">Revelada</span>
+      <div class="busy" id="busy"><span class="dot"></span><span>Revelando</span></div>
+    </div>
+
+    <div class="panel">
+      <div class="sliders">
+        <div class="ctl">
+          <label for="amount">Intensidad <b id="amountV">100%</b></label>
+          <input type="range" id="amount" min="0" max="150" value="100" step="1">
+        </div>
+        <div class="ctl">
+          <label for="grain">Grano <b id="grainV">100%</b></label>
+          <input type="range" id="grain" min="0" max="200" value="100" step="1">
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="row">
+        <button id="compare" aria-pressed="false">Ver original</button>
+        <button id="leak"   aria-pressed="false">Fuga de luz</button>
+        <button id="dust"   aria-pressed="false">Polvo</button>
+        <button id="border" aria-pressed="false">Marco</button>
+        <button id="stamp"  aria-pressed="false">Fecha</button>
+        <input type="text" id="stampText" maxlength="14" hidden>
+        <span class="spacer"></span>
+        <button id="another">Otra foto</button>
+        <button class="primary" id="download">Descargar</button>
+      </div>
+
+      <div class="meta" id="meta"></div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const MAX_EDGE = 3000;
+  const $ = id => document.getElementById(id);
+
+  const dropEl = $("drop"), fileEl = $("file"), workEl = $("work"),
+        stageEl = $("stage"), afterEl = $("after"), beforeEl = $("before"),
+        badgeEl = $("badge"), busyEl = $("busy"), metaEl = $("meta"),
+        amountEl = $("amount"), grainEl = $("grain"),
+        amountV = $("amountV"), grainV = $("grainV"),
+        stampTextEl = $("stampText");
+
+  const actx = afterEl.getContext("2d");
+  const bctx = beforeEl.getContext("2d");
+
+  // lienzo de trabajo: todo el revelado ocurre aquí, sin el marco
+  const workCv = document.createElement("canvas");
+  const wctx = workCv.getContext("2d", { willReadFrequently: true });
+
+  let source = null, baseName = "foto", renderToken = 0, seed = 1;
+  const opt = { border:false, leak:false, dust:false, stamp:false };
+
+  /* PRNG con semilla: el polvo y la fuga no bailan al mover los sliders */
+  function mulberry32(a){
+    return function(){
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  /* ============================================================
+     CURVAS POR CANAL — el corazón del look de película.
+     Cada canal tiene su propio suelo (lift) y su propio techo (gain):
+     el azul arranca alto y termina bajo  -> sombras cian, luces ámbar.
+     ============================================================ */
+  const CH = {
+    r:{ lift:0.030, gain:1.000, gamma:1.00 },
+    g:{ lift:0.028, gain:0.994, gamma:1.00 },
+    b:{ lift:0.055, gain:0.968, gamma:0.99 }
+  };
+  const SHOULDER = 0.78, SHOULDER_K = 1.35, CONTRAST = 0.96;
+
+  function buildLUT(c){
+    const lut = new Float32Array(256);
+    const norm = 1 - Math.exp(-SHOULDER_K);
+    for (let i = 0; i < 256; i++){
+      let x = Math.pow(i / 255, c.gamma);
+      if (x > SHOULDER){                                  // hombro suave en luces
+        const t = (x - SHOULDER) / (1 - SHOULDER);
+        x = SHOULDER + (1 - SHOULDER) * (1 - Math.exp(-SHOULDER_K * t)) / norm;
+      }
+      x = (x - 0.5) * CONTRAST + 0.5;                     // contraste bajo
+      x = c.lift + (c.gain - c.lift) * x;                 // suelo y techo del canal
+      lut[i] = x < 0 ? 0 : x > 1 ? 1 : x;
+    }
+    return lut;
+  }
+  const LUT_R = buildLUT(CH.r), LUT_G = buildLUT(CH.g), LUT_B = buildLUT(CH.b);
+
+  /* ---- gradación por píxel ---- */
+  function grade(data, k){
+    const WB_R = 1.012, WB_G = 1.004, WB_B = 0.982;
+
+    for (let i = 0; i < data.length; i += 4){
+      const or = data[i], og = data[i+1], ob = data[i+2];
+
+      let r = LUT_R[Math.min(255, (or * WB_R) | 0)];
+      let g = LUT_G[Math.min(255, (og * WB_G) | 0)];
+      let b = LUT_B[Math.min(255, (ob * WB_B) | 0)];
+
+      const L = 0.2126*r + 0.7152*g + 0.0722*b;
+
+      // split-toning marcado: sombras teal, luces ámbar
+      const sw = (1 - L) * (1 - L), hw = L * L;
+      r += -0.016*sw + 0.038*hw;
+      g +=  0.005*sw + 0.013*hw;
+      b +=  0.024*sw - 0.034*hw;
+
+      // tono sepia leve en los medios: el papel amarillea con los años
+      const mw = 4 * L * (1 - L);
+      r += 0.009*mw; g += 0.003*mw; b -= 0.007*mw;
+
+      // desaturación (los azules conservan más cuerpo)
+      const sat = (b > r && b > g) ? 0.98 : 0.90;
+      const lum = 0.2126*r + 0.7152*g + 0.0722*b;
+      r = lum + (r - lum)*sat;
+      g = lum + (g - lum)*sat;
+      b = lum + (b - lum)*sat;
+
+      const nr = or + (r*255 - or)*k,
+            ng = og + (g*255 - og)*k,
+            nb = ob + (b*255 - ob)*k;
+
+      data[i]   = nr < 0 ? 0 : nr > 255 ? 255 : nr;
+      data[i+1] = ng < 0 ? 0 : ng > 255 ? 255 : ng;
+      data[i+2] = nb < 0 ? 0 : nb > 255 ? 255 : nb;
+    }
+  }
+
+  /* ---- aberración cromática radial ---- */
+  function chromatic(src, w, h, px){
+    if (px < 0.2) return src;
+    const out = new Uint8ClampedArray(src);
+    const cx = w/2, cy = h/2, maxR = Math.hypot(cx, cy);
+
+    for (let y = 0; y < h; y++){
+      const dy = y - cy;
+      for (let x = 0; x < w; x++){
+        const dx = x - cx;
+        const d = Math.hypot(dx, dy);
+        const r = d / maxR;
+        const shift = px * r * r;
+        if (shift < 0.4 || d < 1) continue;
+
+        const ux = dx/d, uy = dy/d, i = (y*w + x)*4;
+        const rx = Math.round(x + ux*shift), ry = Math.round(y + uy*shift);
+        const bx = Math.round(x - ux*shift), by = Math.round(y - uy*shift);
+
+        if (rx >= 0 && rx < w && ry >= 0 && ry < h) out[i]   = src[(ry*w + rx)*4];
+        if (bx >= 0 && bx < w && by >= 0 && by < h) out[i+2] = src[(by*w + bx)*4 + 2];
+      }
+    }
+    return out;
+  }
+
+  /* ---- halación: las luces sangran en rojo-naranja ---- */
+  function halation(ctx, w, h, strength){
+    if (strength <= 0) return;
+    const src = ctx.getImageData(0, 0, w, h);
+    const hi = ctx.createImageData(w, h);
+    const s = src.data, d = hi.data;
+
+    for (let i = 0; i < s.length; i += 4){
+      const lum = (0.2126*s[i] + 0.7152*s[i+1] + 0.0722*s[i+2]) / 255;
+      const m = lum > 0.74 ? (lum - 0.74) / 0.26 : 0;
+      d[i] = 255*m; d[i+1] = 140*m; d[i+2] = 60*m; d[i+3] = 255;
+    }
+    const tmp = document.createElement("canvas");
+    tmp.width = w; tmp.height = h;
+    tmp.getContext("2d").putImageData(hi, 0, 0);
+
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    ctx.globalAlpha = strength;
+    ctx.filter = `blur(${Math.max(5, Math.round(Math.min(w,h)*0.016))}px)`;
+    ctx.drawImage(tmp, 0, 0);
+    ctx.restore();
+    ctx.filter = "none";
+  }
+
+  /* ---- velo cálido: la neblina lechosa del papel viejo ---- */
+  function veil(ctx, w, h, strength){
+    if (strength <= 0) return;
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    ctx.fillStyle = `rgba(196,150,96,${strength})`;
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  }
+
+  /* ---- fuga de luz: mancha en una esquina + banda en el borde ---- */
+  function lightLeak(ctx, w, h, strength, rnd){
+    if (strength <= 0) return;
+    const corners = [[0,0],[w,0],[0,h],[w,h]];
+    const ci = Math.floor(rnd()*4);
+    const [lx, ly] = corners[ci];
+
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+
+    // mancha principal, con alcance largo
+    const g = ctx.createRadialGradient(lx, ly, 0, lx, ly, Math.max(w,h)*1.15);
+    g.addColorStop(0,    `rgba(255,186,96,${strength})`);
+    g.addColorStop(0.22, `rgba(240,138,58,${strength*0.62})`);
+    g.addColorStop(0.55, `rgba(196,72,44,${strength*0.22})`);
+    g.addColorStop(1,     "rgba(150,40,30,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+
+    // banda cálida a lo largo del borde vertical de esa esquina
+    const left = (lx === 0);
+    const band = ctx.createLinearGradient(left ? 0 : w, 0, left ? w*0.42 : w*0.58, 0);
+    band.addColorStop(0,   `rgba(255,158,70,${strength*0.55})`);
+    band.addColorStop(0.5, `rgba(226,96,48,${strength*0.14})`);
+    band.addColorStop(1,    "rgba(0,0,0,0)");
+    ctx.fillStyle = band;
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.restore();
+  }
+
+  /* ---- polvo y rayas del escaneo ---- */
+  function dustAndScratches(ctx, w, h, k, rnd){
+    if (k <= 0) return;
+    const s = Math.min(w, h);
+    ctx.save();
+
+    const specks = Math.round(s * 0.10 * k);
+    for (let i = 0; i < specks; i++){
+      const x = rnd()*w, y = rnd()*h, r = rnd()*rnd()*s*0.0026 + 0.4;
+      ctx.globalAlpha = (0.10 + rnd()*0.30) * k;
+      ctx.fillStyle = rnd() > 0.35 ? "#f6efe0" : "#1b1208";
+      ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill();
+    }
+
+    const scratches = 1 + Math.floor(rnd()*3);
+    for (let i = 0; i < scratches; i++){
+      const x = rnd()*w;
+      ctx.globalAlpha = (0.05 + rnd()*0.10) * k;
+      ctx.strokeStyle = "#f6efe0";
+      ctx.lineWidth = Math.max(0.6, s*0.0009);
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.bezierCurveTo(x + (rnd()-0.5)*w*0.05, h*0.33,
+                        x + (rnd()-0.5)*w*0.05, h*0.66, x + (rnd()-0.5)*w*0.03, h);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  /* ---- suavidad de lente ---- */
+  function soften(ctx, cv, amount){
+    if (amount <= 0) return;
+    const tmp = document.createElement("canvas");
+    tmp.width = cv.width; tmp.height = cv.height;
+    tmp.getContext("2d").drawImage(cv, 0, 0);
+    ctx.save();
+    ctx.globalAlpha = amount;
+    ctx.filter = `blur(${Math.max(1, Math.round(Math.min(cv.width,cv.height)*0.0014))}px)`;
+    ctx.drawImage(tmp, 0, 0);
+    ctx.restore();
+    ctx.filter = "none";
+  }
+
+  /* ---- grano + viñeta ---- */
+  function grainVignette(data, w, h, gAmt, vAmt, rnd){
+    const cx = w/2, cy = h/2, maxR2 = cx*cx + cy*cy;
+    for (let y = 0; y < h; y++){
+      const dy = y - cy, dy2 = dy*dy;
+      for (let x = 0; x < w; x++){
+        const i = (y*w + x)*4;
+        let r = data[i], g = data[i+1], b = data[i+2];
+
+        if (vAmt > 0){
+          const dx = x - cx;
+          const rr = (dx*dx + dy2) / maxR2;
+          const v = 1 - vAmt*rr*rr;
+          r *= v; g *= v; b *= v;
+        }
+        if (gAmt > 0){
+          const lum = (0.2126*r + 0.7152*g + 0.0722*b) / 255;
+          const w8 = gAmt * (1 + 1.6*(1 - lum));
+          const n = (rnd() - 0.5) * w8;
+          const nc = (rnd() - 0.5) * w8 * 0.35;   // pizca de grano de color
+          r += n + nc; g += n; b += n - nc;
+        }
+        data[i]   = r < 0 ? 0 : r > 255 ? 255 : r;
+        data[i+1] = g < 0 ? 0 : g > 255 ? 255 : g;
+        data[i+2] = b < 0 ? 0 : b > 255 ? 255 : b;
+      }
+    }
+  }
+
+  /* ---- sello de fecha de cámara compacta ---- */
+  function dateStamp(ctx, w, h, text){
+    if (!text) return;
+    const size = Math.max(12, Math.round(Math.min(w, h) * 0.034));
+    ctx.save();
+    ctx.font = `700 ${size}px ${"'Courier New',ui-monospace,monospace"}`;
+    ctx.textAlign = "right";
+    ctx.textBaseline = "alphabetic";
+    ctx.globalCompositeOperation = "lighter";
+    ctx.shadowColor = "rgba(255,110,20,.95)";
+    ctx.shadowBlur = size * 0.55;
+    ctx.fillStyle = "rgba(255,150,45,.92)";
+    const x = w - size*1.1, y = h - size*1.0;
+    ctx.fillText(text, x, y);
+    ctx.fillText(text, x, y);
+    ctx.restore();
+  }
+
+  /* ============================================================
+     REVELADO COMPLETO
+     ============================================================ */
+  async function render(){
+    if (!source) return;
+    const token = ++renderToken;
+
+    busyEl.classList.add("on");
+    await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+    if (token !== renderToken) return;
+
+    const k    = +amountEl.value / 100;
+    const gAmt = (+grainEl.value / 100) * 6.2 * Math.min(1, k || 0.001);
+
+    const iw = source.width, ih = source.height;
+    const scale = Math.min(1, MAX_EDGE / Math.max(iw, ih));
+    const w = Math.max(1, Math.round(iw*scale));
+    const h = Math.max(1, Math.round(ih*scale));
+
+    workCv.width = w; workCv.height = h;
+    wctx.drawImage(source, 0, 0, w, h);
+
+    // 1 · aberración cromática  2 · curvas por canal + tonos
+    let img = wctx.getImageData(0, 0, w, h);
+    img = new ImageData(chromatic(img.data, w, h, 1.1*k*Math.max(w,h)/2000), w, h);
+    grade(img.data, k);
+    wctx.putImageData(img, 0, 0);
+    if (token !== renderToken) return;
+
+    // 3 · halación  4 · velo  5 · fuga  6 · suavidad  7 · polvo
+    halation(wctx, w, h, 0.20*k);
+    veil(wctx, w, h, 0.016*k);
+    lightLeak(wctx, w, h, opt.leak ? 0.30*k : 0, mulberry32(seed));
+    soften(wctx, workCv, 0.26*k);
+    dustAndScratches(wctx, w, h, opt.dust ? k : 0, mulberry32(seed + 99));
+
+    // 8 · grano + viñeta
+    img = wctx.getImageData(0, 0, w, h);
+    grainVignette(img.data, w, h, gAmt, 0.13*k, mulberry32(seed + 7));
+    wctx.putImageData(img, 0, 0);
+
+    // 9 · sello de fecha
+    if (opt.stamp) dateStamp(wctx, w, h, stampTextEl.value.trim());
+
+    // 10 · composición final con marco
+    const pad = opt.border ? Math.round(Math.min(w, h) * 0.05) : 0;
+    afterEl.width  = beforeEl.width  = w + pad*2;
+    afterEl.height = beforeEl.height = h + pad*2;
+
+    actx.fillStyle = "#f0e8d8";
+    actx.fillRect(0, 0, afterEl.width, afterEl.height);
+    actx.drawImage(workCv, pad, pad);
+
+    bctx.fillStyle = "#f0e8d8";
+    bctx.fillRect(0, 0, beforeEl.width, beforeEl.height);
+    bctx.drawImage(source, pad, pad, w, h);
+
+    metaEl.textContent = `${iw}×${ih} px` + (scale < 1 ? ` · revelada a ${w}×${h}` : "");
+    if (token === renderToken) busyEl.classList.remove("on");
+  }
+
+  /* ---------- carga ---------- */
+  async function load(file){
+    if (!file || !file.type.startsWith("image/")){
+      alert("Ese archivo no es una imagen.");
+      return;
+    }
+    baseName = (file.name || "foto").replace(/\.[^.]+$/, "");
+    seed = (Date.now() ^ Math.floor(Math.random()*1e9)) >>> 0;
+
+    try {
+      source = await createImageBitmap(file, { imageOrientation: "from-image" });
+    } catch {
+      source = await new Promise((res, rej) => {
+        const im = new Image();
+        im.onload = () => res(im);
+        im.onerror = rej;
+        im.src = URL.createObjectURL(file);
+      }).catch(() => null);
+      if (!source) { alert("No se pudo abrir esa imagen."); return; }
+    }
+
+    workEl.classList.add("on");
+    dropEl.style.display = "none";
+    await render();
+    workEl.scrollIntoView({ behavior:"smooth", block:"nearest" });
+  }
+
+  /* ---------- eventos ---------- */
+  dropEl.addEventListener("click", () => fileEl.click());
+  dropEl.addEventListener("keydown", e => {
+    if (e.key === "Enter" || e.key === " "){ e.preventDefault(); fileEl.click(); }
+  });
+  fileEl.addEventListener("change", e => e.target.files[0] && load(e.target.files[0]));
+
+  ["dragenter","dragover"].forEach(ev =>
+    document.addEventListener(ev, e => { e.preventDefault(); dropEl.classList.add("over"); }));
+  ["dragleave","drop"].forEach(ev =>
+    document.addEventListener(ev, e => { e.preventDefault(); dropEl.classList.remove("over"); }));
+  document.addEventListener("drop", e => {
+    const f = e.dataTransfer && e.dataTransfer.files[0];
+    if (f) load(f);
+  });
+  document.addEventListener("paste", e => {
+    const it = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith("image/"));
+    if (it) load(it.getAsFile());
+  });
+
+  let t = null;
+  const debounced = () => { clearTimeout(t); t = setTimeout(render, 140); };
+
+  amountEl.addEventListener("input", () => { amountV.textContent = amountEl.value + "%"; debounced(); });
+  grainEl .addEventListener("input", () => { grainV .textContent = grainEl .value + "%"; debounced(); });
+
+  function toggle(id, key){
+    $(id).addEventListener("click", e => {
+      opt[key] = !opt[key];
+      e.currentTarget.setAttribute("aria-pressed", String(opt[key]));
+      if (key === "stamp") stampTextEl.hidden = !opt.stamp;
+      render();
+    });
+  }
+  toggle("leak","leak"); toggle("dust","dust");
+  toggle("border","border"); toggle("stamp","stamp");
+
+  stampTextEl.addEventListener("input", debounced);
+
+  $("compare").addEventListener("click", e => {
+    const on = stageEl.classList.toggle("compare");
+    e.currentTarget.setAttribute("aria-pressed", String(on));
+    e.currentTarget.textContent = on ? "Ver revelada" : "Ver original";
+    badgeEl.textContent = on ? "Original" : "Revelada";
+  });
+
+  $("another").addEventListener("click", () => { fileEl.value = ""; fileEl.click(); });
+
+  $("download").addEventListener("click", () => {
+    afterEl.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${baseName}-35mm.jpg`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }, "image/jpeg", 0.94);
+  });
+
+  // fecha por defecto, formato de compacta japonesa
+  const d = new Date();
+  stampTextEl.value = `'${String(d.getFullYear()).slice(2)} ${d.getMonth()+1} ${d.getDate()}`;
+})();
+</script>
+</body>
+</html>
