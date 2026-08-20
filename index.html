@@ -386,18 +386,23 @@ const UNIT_NAMES = {U1:"U1 · Mediciones", U2:"U2 · Óptica", U3:"U3 · Cinemá
 
 /* ======================= PROGRESO ======================= */
 const STORAGE_KEY = "fisica1_progreso_v1";
+const MASTERY_STREAK = 3; // aciertos seguidos para considerarla "dominada"
 function loadProgress(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     if(raw) return JSON.parse(raw);
   }catch(e){}
   const p = {};
-  FORMULAS.forEach(f => p[f.id] = {seen:0, correct:0, wrong:0, weight:3});
+  FORMULAS.forEach(f => p[f.id] = {seen:0, correct:0, wrong:0, weight:3, streak:0});
   return p;
 }
 let progress = loadProgress();
-FORMULAS.forEach(f => { if(!progress[f.id]) progress[f.id] = {seen:0, correct:0, wrong:0, weight:3}; });
+FORMULAS.forEach(f => {
+  if(!progress[f.id]) progress[f.id] = {seen:0, correct:0, wrong:0, weight:3, streak:0};
+  if(progress[f.id].streak === undefined) progress[f.id].streak = 0; // progreso viejo sin racha
+});
 function saveProgress(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); }
+function isMastered(id){ return progress[id].streak >= MASTERY_STREAK; }
 
 /* ======================= ESTADO ======================= */
 let mode = "flash";
@@ -451,10 +456,15 @@ function pool(){
   return FORMULAS.filter(f => activeUnits.has(f.unit));
 }
 
+// solo las que todavía no están dominadas: son las que se juegan
+function activePool(){
+  return pool().filter(f => !isMastered(f.id));
+}
+
 // elige una tarjeta con más probabilidad si tiene peso alto (le cuesta más)
 function pickWeighted(exclude){
-  const items = pool().filter(f => f.id !== (exclude && exclude.id));
-  const source = items.length ? items : pool();
+  const items = activePool().filter(f => f.id !== (exclude && exclude.id));
+  const source = items.length ? items : activePool();
   const weights = source.map(f => progress[f.id].weight || 1);
   const total = weights.reduce((a,b)=>a+b,0);
   let r = Math.random()*total;
@@ -471,6 +481,11 @@ function sample(arr, n, excludeId){
   return shuffled.slice(0, n);
 }
 
+function streakBadge(f){
+  const s = Math.min(progress[f.id].streak || 0, MASTERY_STREAK);
+  return `<span class="prompt-tag" style="background:var(--var-bg);color:var(--var-text);" title="Aciertos seguidos para dominarla">🔥 ${s}/${MASTERY_STREAK}</span>`;
+}
+
 function renderMath(el){
   el.querySelectorAll("[data-tex]").forEach(node=>{
     try{
@@ -485,9 +500,11 @@ function markResult(id, ok){
   if(ok){
     p.correct++;
     p.weight = Math.max(1, p.weight - 1);
+    p.streak = (p.streak || 0) + 1;
   } else {
     p.wrong++;
     p.weight = Math.min(8, p.weight + 2);
+    p.streak = 0;
   }
   saveProgress();
   renderStats();
@@ -497,7 +514,7 @@ function renderStats(){
   const items = pool();
   let seen=0, correct=0;
   items.forEach(f=>{ seen += progress[f.id].seen; correct += progress[f.id].correct; });
-  const mastered = items.filter(f => progress[f.id].correct >= 2 && progress[f.id].weight <= 2).length;
+  const mastered = items.filter(f => isMastered(f.id)).length;
   statsEl.innerHTML = `
     <span><b>${items.length}</b> fórmulas activas</span>
     <span><b>${mastered}</b> dominadas</span>
@@ -509,10 +526,25 @@ function renderStats(){
 
 function nextRound(){
   renderStats();
+  if(activePool().length === 0) return renderAllMastered();
   if(mode==="flash") return renderFlash();
   if(mode==="quiz-formula") return renderQuizFormula();
   if(mode==="quiz-name") return renderQuizName();
   if(mode==="type") return renderType();
+}
+
+function renderAllMastered(){
+  stageEl.innerHTML = `
+    <div style="font-size:2.4rem;">🏆</div>
+    <div class="prompt-name">¡Dominaste todas las fórmulas activas!</div>
+    <div class="flip-hint">Necesitás ${MASTERY_STREAK} aciertos seguidos en una fórmula para que se marque como dominada y deje de aparecer. Repasalas de nuevo cuando quieras.</div>
+    <button class="btn primary" id="reviewAgainBtn">🔁 Repasar de nuevo</button>
+  `;
+  document.getElementById("reviewAgainBtn").addEventListener("click", ()=>{
+    pool().forEach(f => { progress[f.id].streak = 0; });
+    saveProgress();
+    nextRound();
+  });
 }
 
 /* --- Flashcards --- */
@@ -520,7 +552,7 @@ function renderFlash(){
   current = pickWeighted(current);
   const f = current;
   stageEl.innerHTML = `
-    <span class="prompt-tag">${UNIT_NAMES[f.unit]}</span>
+    <div class="row"><span class="prompt-tag">${UNIT_NAMES[f.unit]}</span>${streakBadge(f)}</div>
     <div class="prompt-name">${f.name}</div>
     <div class="flip-hint">Pensá la fórmula… y dala vuelta.</div>
     <button class="btn primary" id="flipBtn">🔄 Mostrar fórmula</button>
@@ -554,7 +586,7 @@ function renderQuizFormula(){
   const options = [f, ...distractors].sort(()=>Math.random()-0.5);
 
   stageEl.innerHTML = `
-    <span class="prompt-tag">${UNIT_NAMES[f.unit]}</span>
+    <div class="row"><span class="prompt-tag">${UNIT_NAMES[f.unit]}</span>${streakBadge(f)}</div>
     <div class="prompt-name">${f.name}</div>
     <div class="choices" id="choicesArea"></div>
   `;
@@ -587,7 +619,7 @@ function renderQuizName(){
   const options = [f, ...distractors].sort(()=>Math.random()-0.5);
 
   stageEl.innerHTML = `
-    <span class="prompt-tag">${UNIT_NAMES[f.unit]}</span>
+    <div class="row"><span class="prompt-tag">${UNIT_NAMES[f.unit]}</span>${streakBadge(f)}</div>
     <div class="prompt-formula" data-tex="${escapeAttr(f.formula)}"></div>
     <div class="choices" id="choicesArea"></div>
   `;
@@ -629,7 +661,7 @@ function renderType(){
   current = pickWeighted(current);
   const f = current;
   stageEl.innerHTML = `
-    <span class="prompt-tag">${UNIT_NAMES[f.unit]}</span>
+    <div class="row"><span class="prompt-tag">${UNIT_NAMES[f.unit]}</span>${streakBadge(f)}</div>
     <div class="prompt-name">${f.name}</div>
     <input type="text" class="type-input" id="typeInput" placeholder="Escribí la fórmula (ej: F = m * a)" autocomplete="off">
     <div class="type-hint">No hace falta LaTeX: usá *, /, ^, sen(), cos(), tan(), sqrt(). Se compara de forma flexible.</div>

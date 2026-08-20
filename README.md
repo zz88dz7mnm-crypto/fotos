@@ -26,9 +26,18 @@ Podés filtrar por unidad (U1–U4) en cualquier momento.
 ## Progreso
 
 Cada fórmula tiene un "peso": cuando la fallás pesa más y aparece con más
-frecuencia; cuando la acertás pesa menos. El progreso (aciertos, errores,
-peso) se guarda en `localStorage` del navegador, así que es individual por
-dispositivo. Se puede reiniciar desde el enlace al pie de la página.
+frecuencia; cuando la acertás pesa menos.
+
+Además, cada fórmula lleva una **racha de aciertos seguidos** (se ve como
+🔥 x/3 en la tarjeta). Al llegar a **3 aciertos consecutivos** la fórmula
+queda marcada como **dominada** y deja de aparecer en el pool de práctica.
+Un solo error corta la racha a 0. Cuando dominás todas las fórmulas
+activas (según el filtro de unidad elegido), la app te lo dice y te deja
+un botón para repasarlas todas de nuevo.
+
+El progreso (aciertos, errores, peso, racha) se guarda en `localStorage`
+del navegador, así que es individual por dispositivo. Se puede reiniciar
+del todo desde el enlace al pie de la página.
 
 ## Desplegar
 
