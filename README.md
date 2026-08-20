@@ -3,10 +3,14 @@
 Dos piezas del mismo sistema:
 
 - **`index.html`** — el revelador: subís una foto, la ajustás con los sliders y la descargás.
-- **`diario.html`** — el diario fotográfico compartido: subís una foto, sale revelada sola
-  y entra a una galería tipo Polaroid. Publicado como artifact con estado compartido,
-  así que quien tenga el link ve las fotos y puede sumar las suyas. Abierto como archivo
-  suelto funciona igual, guardando en el navegador.
+- **`diario.html`** — el muro: dos páginas en un mismo documento.
+  - El link limpio es **solo el collage**: fotos de punta a punta, sin marcos ni
+    texto, en filas justificadas que llenan el ancho exacto sin huecos.
+  - El mismo link con **`#subir`** al final es la página de carga.
+
+  Publicado como artifact con estado compartido, así que las fotos que suma
+  cualquiera llegan a todas las vistas abiertas. Abierto como archivo suelto
+  funciona igual, guardando en el navegador.
 
 ---
 
