@@ -192,8 +192,8 @@
     <h1>Revelado <span>35 MM</span></h1>
     <hr class="rule">
     <p class="sub">
-      Sube cualquier foto y sale revelada en carrete: emulsión desvaída,
-      sombras cian, luces ámbar, halación, fuga de luz, polvo y grano.
+      Sube cualquier foto y sale revelada en carrete: luz cálida de hora dorada,
+      luces ámbar, sombras con un punto de cian, halación y grano fino.
       Todo ocurre en tu navegador — la imagen no se sube a ningún sitio.
     </p>
   </header>
@@ -229,8 +229,8 @@
 
       <div class="row">
         <button id="compare" aria-pressed="false">Ver original</button>
-        <button id="leak"   aria-pressed="true">Fuga de luz</button>
-        <button id="dust"   aria-pressed="true">Polvo</button>
+        <button id="leak"   aria-pressed="false">Fuga de luz</button>
+        <button id="dust"   aria-pressed="false">Polvo</button>
         <button id="border" aria-pressed="false">Marco</button>
         <button id="stamp"  aria-pressed="false">Fecha</button>
         <input type="text" id="stampText" maxlength="14" hidden>
@@ -267,7 +267,7 @@
   const wctx = workCv.getContext("2d", { willReadFrequently: true });
 
   let source = null, baseName = "foto", renderToken = 0, seed = 1;
-  const opt = { border:false, leak:true, dust:true, stamp:false };
+  const opt = { border:false, leak:false, dust:false, stamp:false };
 
   /* PRNG con semilla: el polvo y la fuga no bailan al mover los sliders */
   function mulberry32(a){
@@ -285,11 +285,11 @@
      el azul arranca alto y termina bajo  -> sombras cian, luces ámbar.
      ============================================================ */
   const CH = {
-    r:{ lift:0.055, gain:1.000, gamma:1.03 },
-    g:{ lift:0.050, gain:0.980, gamma:1.00 },
-    b:{ lift:0.115, gain:0.910, gamma:0.96 }
+    r:{ lift:0.030, gain:1.000, gamma:1.00 },
+    g:{ lift:0.028, gain:0.994, gamma:1.00 },
+    b:{ lift:0.055, gain:0.968, gamma:0.99 }
   };
-  const SHOULDER = 0.68, SHOULDER_K = 2.1, CONTRAST = 0.84;
+  const SHOULDER = 0.78, SHOULDER_K = 1.35, CONTRAST = 0.96;
 
   function buildLUT(c){
     const lut = new Float32Array(256);
@@ -310,7 +310,7 @@
 
   /* ---- gradación por píxel ---- */
   function grade(data, k){
-    const WB_R = 1.005, WB_G = 1.012, WB_B = 0.976;
+    const WB_R = 1.012, WB_G = 1.004, WB_B = 0.982;
 
     for (let i = 0; i < data.length; i += 4){
       const or = data[i], og = data[i+1], ob = data[i+2];
@@ -323,16 +323,16 @@
 
       // split-toning marcado: sombras teal, luces ámbar
       const sw = (1 - L) * (1 - L), hw = L * L;
-      r += -0.045*sw + 0.052*hw;
-      g +=  0.018*sw + 0.020*hw;
-      b +=  0.055*sw - 0.048*hw;
+      r += -0.016*sw + 0.038*hw;
+      g +=  0.005*sw + 0.013*hw;
+      b +=  0.024*sw - 0.034*hw;
 
       // tono sepia leve en los medios: el papel amarillea con los años
       const mw = 4 * L * (1 - L);
-      r += 0.020*mw; g += 0.008*mw; b -= 0.014*mw;
+      r += 0.009*mw; g += 0.003*mw; b -= 0.007*mw;
 
       // desaturación (los azules conservan más cuerpo)
-      const sat = (b > r && b > g) ? 0.85 : 0.72;
+      const sat = (b > r && b > g) ? 0.98 : 0.90;
       const lum = 0.2126*r + 0.7152*g + 0.0722*b;
       r = lum + (r - lum)*sat;
       g = lum + (g - lum)*sat;
@@ -383,7 +383,7 @@
 
     for (let i = 0; i < s.length; i += 4){
       const lum = (0.2126*s[i] + 0.7152*s[i+1] + 0.0722*s[i+2]) / 255;
-      const m = lum > 0.66 ? (lum - 0.66) / 0.34 : 0;
+      const m = lum > 0.74 ? (lum - 0.74) / 0.26 : 0;
       d[i] = 255*m; d[i+1] = 140*m; d[i+2] = 60*m; d[i+3] = 255;
     }
     const tmp = document.createElement("canvas");
@@ -542,7 +542,7 @@
     if (token !== renderToken) return;
 
     const k    = +amountEl.value / 100;
-    const gAmt = (+grainEl.value / 100) * 8.5 * Math.min(1, k || 0.001);
+    const gAmt = (+grainEl.value / 100) * 6.2 * Math.min(1, k || 0.001);
 
     const iw = source.width, ih = source.height;
     const scale = Math.min(1, MAX_EDGE / Math.max(iw, ih));
@@ -554,21 +554,21 @@
 
     // 1 · aberración cromática  2 · curvas por canal + tonos
     let img = wctx.getImageData(0, 0, w, h);
-    img = new ImageData(chromatic(img.data, w, h, 1.9*k*Math.max(w,h)/2000), w, h);
+    img = new ImageData(chromatic(img.data, w, h, 1.1*k*Math.max(w,h)/2000), w, h);
     grade(img.data, k);
     wctx.putImageData(img, 0, 0);
     if (token !== renderToken) return;
 
     // 3 · halación  4 · velo  5 · fuga  6 · suavidad  7 · polvo
-    halation(wctx, w, h, 0.34*k);
-    veil(wctx, w, h, 0.055*k);
+    halation(wctx, w, h, 0.20*k);
+    veil(wctx, w, h, 0.016*k);
     lightLeak(wctx, w, h, opt.leak ? 0.30*k : 0, mulberry32(seed));
-    soften(wctx, workCv, 0.38*k);
+    soften(wctx, workCv, 0.26*k);
     dustAndScratches(wctx, w, h, opt.dust ? k : 0, mulberry32(seed + 99));
 
     // 8 · grano + viñeta
     img = wctx.getImageData(0, 0, w, h);
-    grainVignette(img.data, w, h, gAmt, 0.20*k, mulberry32(seed + 7));
+    grainVignette(img.data, w, h, gAmt, 0.13*k, mulberry32(seed + 7));
     wctx.putImageData(img, 0, 0);
 
     // 9 · sello de fecha
