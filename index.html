@@ -1,0 +1,1869 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#120B07">
+<title>OCASO — un instrumento de atención</title>
+<meta name="description" content="OCASO no te dice que es hora de meditar: te muestra que el sol se pone en 40 minutos, hoy, donde estás. Sol, luna y cielo reales como disparador de la práctica.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Outfit:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23140D08'/%3E%3Ccircle cx='16' cy='19' r='7' fill='%23F2B32E'/%3E%3Cpath d='M3 20h26' stroke='%23D9432A' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+/* ==========================================================
+   OCASO · Estética Fusionada
+   Paleta terrosa continua · acentos saturados · turquesa sólo de noche
+   Capas: barro rugoso → trazo grueso y tela → vidrio esmerilado
+   ========================================================== */
+:root{
+  /* núcleo terroso (kasbah) */
+  --ocre:#D99A3C;      --dorado:#F0B44A;   --siena:#B4552C;
+  --terracota:#9C4A26; --marron:#3A2116;   --marron-negro:#1E120C;
+  --negro:#0A0705;
+  /* acentos saturados (Kodak) */
+  --mostaza:#F2B32E;   --bermellon:#D9432A;
+  /* contrapunto frío (moai / cielo nublado) — sólo de noche */
+  --turquesa:#3FB3A6;  --frio:#5C7C8A;
+  /* tinta (contorno cómic/tatuaje) */
+  --tinta:#140D08;
+  /* texto */
+  --crema:#F4E7D3;     --arena:#D8C4A8;    --humo:#A08D77;
+
+  /* variables vivas: las escribe el reloj de luz */
+  --sky-1:#2A1A11; --sky-2:#160E09; --sky-3:#0A0705;
+  --glow:#F0B44A; --glow-a:.30;
+  --acento:#F2B32E;
+  --cool:0;                    /* 0 de día, 1 de noche → habilita el turquesa */
+
+  --glass:rgba(26,16,10,.60);
+  --glass-hi:rgba(255,226,178,.20);
+  --glass-line:rgba(255,205,140,.17);
+  --r:26px;
+  --pad:clamp(16px,2.2vw,24px);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  min-height:100vh; min-height:100dvh;
+  font-family:'Outfit',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color:var(--crema);
+  background:var(--negro);
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ---------- FONDO VIVO: un dato convertido en luz ---------- */
+#sky{position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden}
+.sky-grad{
+  position:absolute; inset:-2%;
+  background:linear-gradient(178deg,var(--sky-1) 0%,var(--sky-2) 52%,var(--sky-3) 100%);
+  transition:background 2.4s linear;
+}
+/* resplandor que sigue la posición real del sol / la luna */
+.orb-glow{
+  position:absolute; width:92vmax; height:92vmax; margin:-46vmax 0 0 -46vmax;
+  border-radius:50%; opacity:var(--glow-a);
+  background:radial-gradient(circle closest-side,var(--glow) 0%,color-mix(in srgb,var(--glow) 45%,transparent) 32%,transparent 68%);
+  transition:opacity 2s linear, background 2s linear;
+  will-change:transform;
+}
+#moonGlow{opacity:0; width:80vmax; height:80vmax; margin:-40vmax 0 0 -40vmax;
+  background:radial-gradient(circle closest-side,rgba(158,214,225,.5) 0%,rgba(63,179,166,.16) 34%,transparent 70%)}
+#stars{position:absolute; inset:0; opacity:0; transition:opacity 3s linear}
+/* barro: mancha grande y rugosa */
+.tex-adobe{
+  position:absolute; inset:0; opacity:.5; mix-blend-mode:soft-light;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='700' height='700'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.009' numOctaves='5' seed='7'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='700' height='700' filter='url(%23a)'/%3E%3C/svg%3E");
+  background-size:900px 900px;
+}
+/* aerógrafo: grano fino sobre toda la superficie */
+.grain{
+  position:absolute; inset:0; opacity:.20; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:220px 220px;
+}
+.vignette{position:absolute; inset:0;
+  background:radial-gradient(ellipse 120% 92% at 50% 34%,transparent 40%,rgba(8,5,3,.62) 100%)}
+
+/* ---------- ESTRUCTURA ---------- */
+.wrap{position:relative; z-index:1; max-width:1180px; margin:0 auto;
+  padding:clamp(18px,3vw,34px) clamp(14px,3vw,28px) 40px;
+  padding-bottom:calc(40px + env(safe-area-inset-bottom))}
+
+header{display:flex; align-items:flex-end; justify-content:space-between;
+  gap:14px; flex-wrap:wrap; margin-bottom:clamp(16px,2.4vw,26px)}
+.brand{display:flex; flex-direction:column; gap:2px}
+.wordmark{
+  font-family:'Fredoka',sans-serif; font-weight:600; font-size:clamp(30px,5.2vw,46px);
+  letter-spacing:.10em; line-height:1; color:var(--dorado);
+  text-shadow:2px 2px 0 rgba(20,13,8,.85), 0 0 34px rgba(240,180,74,.28);
+}
+.tagline{font-size:11px; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--arena); opacity:.72; font-weight:500}
+.head-right{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+.clock{font-weight:200; font-size:clamp(26px,4.4vw,38px); line-height:1;
+  letter-spacing:.01em; font-variant-numeric:tabular-nums; color:var(--crema)}
+
+/* chip de ubicación */
+.chip{
+  display:inline-flex; align-items:center; gap:7px; cursor:pointer;
+  font:inherit; font-size:12.5px; font-weight:400; color:var(--arena);
+  background:rgba(30,19,12,.55); border:1px solid var(--glass-line);
+  padding:7px 13px; border-radius:999px; backdrop-filter:blur(14px) saturate(1.3);
+  -webkit-backdrop-filter:blur(14px) saturate(1.3); transition:.2s;
+}
+.chip:hover{border-color:rgba(255,205,140,.36); color:var(--crema)}
+.chip svg{width:13px; height:13px; flex:none}
+
+/* ---------- BENTO: cuadrícula ordenada, contenido orgánico ---------- */
+.bento{display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:clamp(11px,1.5vw,16px)}
+.card{
+  position:relative; overflow:hidden; border-radius:var(--r); padding:var(--pad);
+  background:var(--glass);
+  backdrop-filter:blur(26px) saturate(1.45); -webkit-backdrop-filter:blur(26px) saturate(1.45);
+  border:1px solid var(--glass-line);
+  box-shadow:0 22px 48px -22px rgba(0,0,0,.85), inset 0 1px 0 var(--glass-hi);
+  display:flex; flex-direction:column; min-width:0;
+}
+/* el resplandor cálido que atraviesa el vidrio */
+.card::before{content:''; position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(120% 90% at 12% 0%,rgba(240,180,74,.13),transparent 62%)}
+/* trama textil sobre cada panel */
+.card::after{content:''; position:absolute; inset:0; pointer-events:none; opacity:.055;
+  background-image:repeating-linear-gradient(0deg,#000 0 1px,transparent 1px 3px),
+                   repeating-linear-gradient(90deg,#000 0 1px,transparent 1px 3px)}
+.card>*{position:relative; z-index:1}
+
+.c-sun{grid-column:span 2; grid-row:span 2}
+.c-moon{grid-column:span 1; grid-row:span 2;
+  box-shadow:0 22px 48px -22px rgba(0,0,0,.85), inset 0 1px 0 var(--glass-hi),
+             inset 0 0 60px -18px rgba(63,179,166,calc(var(--cool) * .55))}
+.c-now{grid-column:span 1}
+.c-sky{grid-column:span 1}
+.c-timer{grid-column:1/-1}
+
+/* versalitas: orden dentro del caos orgánico */
+.label{display:flex; align-items:center; gap:7px; font-size:10.5px; font-weight:500;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--humo); margin-bottom:2px}
+.label svg{width:14px; height:14px; flex:none}
+.label b{font-weight:500; color:var(--ocre)}
+
+.big{font-weight:200; font-size:clamp(38px,5.6vw,62px); line-height:.98;
+  letter-spacing:-.022em; font-variant-numeric:tabular-nums}
+.big em{font-style:normal; font-weight:300; font-size:.42em; letter-spacing:.02em;
+  color:var(--arena); margin-left:.18em}
+.lede{font-size:clamp(14px,1.5vw,16px); font-weight:300; color:var(--arena); line-height:1.45}
+.rows{margin-top:auto; padding-top:14px; display:flex; flex-direction:column}
+.row{display:flex; justify-content:space-between; align-items:baseline; gap:10px;
+  padding:9px 0; border-top:1px solid rgba(255,205,140,.10); font-size:13.5px}
+.row:first-child{border-top:0}
+.row span{color:var(--humo); font-weight:300}
+.row b{font-weight:400; font-variant-numeric:tabular-nums; color:var(--crema)}
+
+/* ---------- SOL ---------- */
+.sun-top{display:flex; gap:clamp(14px,2vw,24px); align-items:center; flex-wrap:wrap}
+#sunCanvas{width:clamp(112px,15vw,168px); height:clamp(112px,15vw,168px);
+  flex:none; display:block}
+.sun-txt{min-width:0; flex:1 1 190px}
+.sun-kicker{font-size:11px; font-weight:500; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--ocre); margin-bottom:7px}
+.sun-txt .lede{margin-top:9px}
+/* arco solar: el día entero de un vistazo */
+.arc{margin:20px 0 2px; width:100%; height:auto; max-height:200px; display:block; overflow:visible}
+.arc .horizon{stroke:rgba(255,205,140,.22); stroke-width:1; stroke-dasharray:2 5}
+.arc .path{fill:none; stroke:rgba(255,205,140,.20); stroke-width:1.5}
+.arc .done{fill:none; stroke:url(#arcgrad); stroke-width:2.5; stroke-linecap:round}
+.arc .golden{fill:none; stroke:var(--bermellon); stroke-width:4; stroke-linecap:round; opacity:.55}
+.arc text{font-family:'Outfit'; font-size:9.5px; font-weight:500; letter-spacing:.14em;
+  fill:var(--humo); text-transform:uppercase}
+
+/* ---------- LUNA ---------- */
+.moon-wrap{display:flex; justify-content:center; padding:2px 0 10px}
+#moonCanvas{width:min(252px,78%); aspect-ratio:1; display:block}
+.moon-name{font-size:clamp(17px,2vw,21px); font-weight:400; text-align:center; line-height:1.2}
+.moon-date{font-size:12.5px; font-weight:300; color:var(--humo); text-align:center; margin-top:3px}
+/* regla de fases, como el widget de referencia */
+.strip{position:relative; height:38px; margin:16px 0 4px}
+.ticks{position:absolute; inset:0 0 14px; display:flex; align-items:flex-end;
+  justify-content:space-between; gap:1px}
+.ticks i{flex:1 1 0; background:rgba(255,225,190,.26); height:9px; border-radius:1px}
+.ticks i.day{height:17px; background:rgba(255,225,190,.5)}
+.strip .marker{position:absolute; top:-2px; width:0; height:0; transform:translateX(-50%);
+  border-left:5px solid transparent; border-right:5px solid transparent;
+  border-top:7px solid var(--acento)}
+.strip .days{position:absolute; left:0; right:0; bottom:0; height:12px}
+.strip .days b{position:absolute; transform:translateX(-50%); font-size:9.5px; font-weight:500;
+  letter-spacing:.13em; color:var(--humo); text-transform:uppercase; white-space:nowrap}
+.strip .days b.now{color:var(--crema)}
+
+/* ---------- CIELO ---------- */
+.sky-icon{width:56px; height:56px; margin:2px 0 10px}
+.sky-state{font-size:clamp(16px,1.8vw,19px); font-weight:400; line-height:1.3}
+.decision{margin-top:12px; padding:11px 13px; border-radius:14px;
+  background:rgba(217,67,42,.13); border:1px solid rgba(217,67,42,.3);
+  font-size:12.5px; font-weight:300; color:var(--crema); line-height:1.4}
+.decision b{font-weight:500; color:var(--mostaza)}
+
+/* ---------- AHORA: el único objeto de plástico ---------- */
+.c-now{gap:12px}
+.now-label{justify-content:center; white-space:nowrap}
+.now-body{flex:1; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:14px; text-align:center}
+.now-txt{display:flex; flex-direction:column; gap:5px; min-width:0}
+.now-kicker{font-size:12px; font-weight:300; color:var(--arena); line-height:1.4}
+.btn-now{
+  position:relative; width:clamp(104px,13vw,132px); aspect-ratio:1; border-radius:50%;
+  border:3px solid var(--tinta); cursor:pointer; flex:none;
+  background:radial-gradient(circle at 34% 26%,#FFD97A 0%,var(--mostaza) 34%,#E2761F 68%,var(--bermellon) 100%);
+  box-shadow:5px 6px 0 rgba(14,9,5,.62), inset 0 -7px 14px rgba(140,45,15,.45),
+             inset 0 5px 12px rgba(255,240,190,.5), 0 0 40px rgba(242,179,46,.26);
+  font-family:'Fredoka',sans-serif; font-weight:600; font-size:clamp(15px,1.8vw,18px);
+  letter-spacing:.1em; color:var(--tinta); text-transform:uppercase;
+  transition:transform .12s cubic-bezier(.3,1.4,.5,1), box-shadow .12s;
+}
+/* el brillo satinado del plástico moldeado */
+.btn-now::after{content:''; position:absolute; left:16%; right:26%; top:9%; height:30%;
+  border-radius:50%; background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,0));
+  pointer-events:none}
+.btn-now:hover{transform:translate(-1px,-1px); box-shadow:6px 7px 0 rgba(14,9,5,.62),
+  inset 0 -7px 14px rgba(140,45,15,.45), inset 0 5px 12px rgba(255,240,190,.5), 0 0 52px rgba(242,179,46,.36)}
+.btn-now:active{transform:translate(4px,5px); box-shadow:1px 1px 0 rgba(14,9,5,.62),
+  inset 0 -5px 12px rgba(140,45,15,.5), inset 0 4px 10px rgba(255,240,190,.42)}
+.now-sub{font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--humo); font-weight:500}
+
+/* ---------- TEMPORIZADOR ---------- */
+.c-timer{flex-direction:row; align-items:center; gap:clamp(14px,2.4vw,30px); flex-wrap:wrap}
+.t-block{display:flex; flex-direction:column; gap:9px; min-width:0}
+.t-block>span{font-size:10.5px; font-weight:500; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--humo)}
+.opts{display:flex; gap:7px; flex-wrap:wrap}
+.opt{font:inherit; font-size:13px; font-weight:300; color:var(--arena); cursor:pointer;
+  background:rgba(255,225,190,.06); border:1px solid rgba(255,205,140,.16);
+  padding:8px 14px; border-radius:999px; transition:.16s; white-space:nowrap}
+.opt:hover{border-color:rgba(255,205,140,.4); color:var(--crema)}
+.opt[aria-pressed="true"]{background:rgba(242,179,46,.17); border-color:var(--mostaza);
+  color:#FFEFCE; font-weight:400}
+.opt .em{display:inline-block; margin-right:6px; opacity:.85}
+.t-go{margin-left:auto}
+
+/* ---------- PRÁCTICA (pantalla completa) ---------- */
+.practice{position:fixed; inset:0; z-index:60; display:none; place-items:center;
+  padding:24px; text-align:center; overflow:auto;
+  background:radial-gradient(ellipse 80% 70% at 50% 42%,rgba(38,23,14,.90),rgba(6,4,3,.975));
+  backdrop-filter:blur(28px) saturate(1.2); -webkit-backdrop-filter:blur(28px) saturate(1.2)}
+.practice.on{display:grid; animation:fade .5s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.p-inner{max-width:440px; width:100%; display:flex; flex-direction:column;
+  align-items:center; gap:clamp(12px,2.2vh,20px); margin:auto; padding:12px 0}
+.p-kicker{font-size:10.5px; letter-spacing:.24em; text-transform:uppercase; color:var(--ocre); font-weight:500}
+.p-title{font-family:'Fredoka',sans-serif; font-weight:500; font-size:clamp(26px,4.6vw,38px);
+  line-height:1.1; letter-spacing:.01em}
+.p-steps{font-size:14.5px; font-weight:300; color:var(--arena); line-height:1.55;
+  max-width:360px; display:flex; flex-direction:column; gap:10px; text-align:left}
+.p-steps div{position:relative; padding-left:20px}
+.p-steps div::before{content:''; position:absolute; left:0; top:.62em; width:10px; height:2px;
+  border-radius:2px; background:var(--ocre); opacity:.7}
+.ring-wrap{position:relative; width:min(260px,74vw); aspect-ratio:1; display:grid; place-items:center}
+.ring{position:absolute; inset:0; transform:rotate(-90deg)}
+.ring circle{fill:none; stroke-linecap:round}
+.ring .bg{stroke:rgba(255,225,190,.12); stroke-width:3}
+.ring .halo{stroke:var(--acento); stroke-width:7; opacity:.22}
+.ring .fg{stroke:var(--acento); stroke-width:3}
+.breath{width:52%; aspect-ratio:1; border-radius:50%; border:2.5px solid var(--tinta);
+  background:radial-gradient(circle at 34% 26%,#FFE9AE 0%,#F2A83A 42%,#D9512A 100%);
+  box-shadow:0 10px 30px -8px rgba(0,0,0,.6), inset 0 -8px 18px rgba(150,50,16,.45),
+             inset 0 6px 14px rgba(255,240,200,.5);
+  display:grid; place-items:center; transition:transform .3s linear}
+.breath span{font-size:12px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--tinta); font-weight:600; text-shadow:0 1px 0 rgba(255,235,190,.5)}
+.p-time{font-weight:200; font-size:clamp(34px,6vw,46px); font-variant-numeric:tabular-nums;
+  letter-spacing:.01em; line-height:1}
+.p-actions{display:flex; gap:9px; flex-wrap:wrap; justify-content:center}
+
+/* ---------- pie ---------- */
+footer{margin-top:26px; display:flex; justify-content:space-between; gap:14px;
+  flex-wrap:wrap; font-size:11.5px; font-weight:300; color:var(--humo); line-height:1.6}
+footer b{font-weight:400; color:var(--arena)}
+.tribal{opacity:.5}
+
+/* ---------- panel de ubicación ---------- */
+.sheet{position:fixed; inset:0; z-index:70; display:none; place-items:center; padding:20px;
+  background:rgba(6,4,3,.72); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px)}
+.sheet.on{display:grid}
+.sheet-in{width:min(400px,100%); background:rgba(34,22,15,.94); border:1px solid var(--glass-line);
+  border-radius:22px; padding:22px; box-shadow:0 30px 70px -20px #000;
+  display:flex; flex-direction:column; gap:12px}
+.sheet-in h3{margin:0; font-family:'Fredoka',sans-serif; font-weight:500; font-size:19px}
+.sheet-in input{font:inherit; font-size:14px; font-weight:300; color:var(--crema);
+  background:rgba(255,225,190,.07); border:1px solid rgba(255,205,140,.2);
+  border-radius:12px; padding:11px 14px; outline:none; width:100%}
+.sheet-in input:focus{border-color:var(--mostaza)}
+.results{display:flex; flex-direction:column; gap:5px; max-height:210px; overflow:auto}
+.results button{font:inherit; font-size:13.5px; font-weight:300; text-align:left; cursor:pointer;
+  color:var(--arena); background:transparent; border:1px solid transparent;
+  border-radius:11px; padding:9px 12px; transition:.15s}
+.results button:hover{background:rgba(255,225,190,.07); border-color:rgba(255,205,140,.2);
+  color:var(--crema)}
+.results button small{display:block; color:var(--humo); font-size:11px; margin-top:2px}
+.note{font-size:11.5px; color:var(--humo); font-weight:300; line-height:1.5}
+
+/* ---------- responsive ---------- */
+@media (max-width:1080px){
+  .bento{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .c-sun{grid-column:span 2; grid-row:span 1}
+  .c-moon{grid-column:span 1; grid-row:span 2;
+  box-shadow:0 22px 48px -22px rgba(0,0,0,.85), inset 0 1px 0 var(--glass-hi),
+             inset 0 0 60px -18px rgba(63,179,166,calc(var(--cool) * .55))}
+  .c-now,.c-sky{grid-column:span 1}
+}
+@media (max-width:660px){
+  :root{--r:22px}
+  .bento{grid-template-columns:minmax(0,1fr)}
+  .c-sun,.c-moon,.c-now,.c-sky,.c-timer{grid-column:span 1; grid-row:auto}
+  .c-sun{order:1} .c-now{order:2} .c-moon{order:3} .c-sky{order:4} .c-timer{order:5}
+  .now-label{justify-content:flex-start}
+  .now-body{flex-direction:row; text-align:left; gap:18px}
+  .now-txt{align-items:flex-start; text-align:left}
+  .c-timer{flex-direction:column; align-items:stretch}
+  .t-go{margin-left:0}
+  #moonCanvas{width:min(248px,74%)}
+  header{align-items:center}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important; transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<div id="sky" aria-hidden="true">
+  <div class="sky-grad"></div>
+  <div class="orb-glow" id="sunGlow"></div>
+  <div class="orb-glow" id="moonGlow"></div>
+  <canvas id="stars"></canvas>
+  <div class="tex-adobe"></div>
+  <div class="grain"></div>
+  <div class="vignette"></div>
+</div>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="wordmark">OCASO</div>
+      <div class="tagline">Un instrumento de atención</div>
+    </div>
+    <div class="head-right">
+      <button class="chip" id="locChip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/>
+        </svg>
+        <span id="locName">buscando…</span>
+      </button>
+      <div class="clock" id="clock">--:--</div>
+    </div>
+  </header>
+
+  <main class="bento">
+
+    <!-- ================= SOL ================= -->
+    <section class="card c-sun">
+      <div class="label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--mostaza)" stroke-width="2.4" stroke-linecap="round">
+          <circle cx="12" cy="12" r="4.4" fill="rgba(242,179,46,.3)"/>
+          <path d="M12 2.2v2.4M12 19.4v2.4M2.2 12h2.4M19.4 12h2.4M5 5l1.7 1.7M17.3 17.3 19 19M19 5l-1.7 1.7M6.7 17.3 5 19"/>
+        </svg>
+        WIDGET · <b>SOL</b>
+      </div>
+      <div class="sun-top">
+        <canvas id="sunCanvas" width="340" height="340" aria-label="El sol en 3D"></canvas>
+        <div class="sun-txt">
+          <div class="sun-kicker" id="sunKicker">calculando</div>
+          <div class="big" id="sunBig">—</div>
+          <div class="lede" id="sunLede">Calculando la posición real del sol…</div>
+        </div>
+      </div>
+      <svg class="arc" id="sunArc" viewBox="0 0 400 96" aria-hidden="true">
+        <defs>
+          <linearGradient id="arcgrad" x1="0" x2="1">
+            <stop offset="0" stop-color="#B4552C"/><stop offset=".5" stop-color="#F2B32E"/>
+            <stop offset="1" stop-color="#D9432A"/>
+          </linearGradient>
+        </defs>
+        <line class="horizon" x1="0" y1="72" x2="400" y2="72"/>
+        <path class="path" id="arcPath" d="M10 72 Q200 -52 390 72"/>
+        <path class="golden" id="arcGolden" d=""/>
+        <path class="done" id="arcDone" d=""/>
+        <g id="arcMark"><circle r="6.5" fill="var(--mostaza)" stroke="var(--tinta)" stroke-width="2"/></g>
+        <text x="10" y="90" id="arcL">—</text>
+        <text x="390" y="90" text-anchor="end" id="arcR">—</text>
+      </svg>
+      <div class="rows" id="sunRows"></div>
+    </section>
+
+    <!-- ================= LUNA ================= -->
+    <section class="card c-moon">
+      <div class="label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--turquesa)" stroke-width="2.4" stroke-linejoin="round">
+          <path d="M20.5 14.5A8.6 8.6 0 0 1 9.4 3.6 8.8 8.8 0 1 0 20.5 14.5z" fill="rgba(63,179,166,.18)"/>
+        </svg>
+        WIDGET · <b>LUNA</b>
+      </div>
+      <div class="moon-wrap"><canvas id="moonCanvas" width="380" height="380" aria-label="La luna en 3D con su fase real"></canvas></div>
+      <div class="moon-name" id="moonName">—</div>
+      <div class="moon-date" id="moonDate">—</div>
+      <div class="strip">
+        <div class="ticks" id="ticks"></div>
+        <div class="marker" id="stripMark" style="left:50%"></div>
+        <div class="days" id="stripDays"></div>
+      </div>
+      <div class="rows" id="moonRows"></div>
+    </section>
+
+    <!-- ================= AHORA ================= -->
+    <section class="card c-now">
+      <div class="label now-label">BOTÓN · <b>AHORA</b></div>
+      <div class="now-body">
+        <button class="btn-now" id="btnNow">Ahora</button>
+        <div class="now-txt">
+          <div class="now-sub" id="nowTitle">—</div>
+          <div class="now-kicker" id="nowKicker">Cruza hora, cielo y luna reales. Sin menú.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= CIELO ================= -->
+    <section class="card c-sky">
+      <div class="label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--ocre)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6.5 18.5h11a3.9 3.9 0 0 0 .3-7.8 5.6 5.6 0 0 0-10.7-1.4 4.1 4.1 0 0 0-.6 9.2z" fill="rgba(217,154,60,.16)"/>
+        </svg>
+        WIDGET · <b>CIELO REAL</b>
+      </div>
+      <div id="skyIcon" class="sky-icon"></div>
+      <div class="sky-state" id="skyState">Leyendo el cielo…</div>
+      <div class="decision" id="skyDecision">El clima real decide la forma de la práctica.</div>
+      <div class="rows" id="skyRows"></div>
+    </section>
+
+    <!-- ================= TEMPORIZADOR ================= -->
+    <section class="card c-timer">
+      <div class="t-block">
+        <span>Temporizador</span>
+        <div class="opts" id="durs"></div>
+      </div>
+      <div class="t-block">
+        <span>Sonido ambiente</span>
+        <div class="opts" id="sounds"></div>
+      </div>
+      <div class="t-block t-go">
+        <span style="opacity:0">Empezar</span>
+        <div class="opts"><button class="opt" id="btnStart"
+          style="background:rgba(242,179,46,.16);border-color:var(--mostaza);color:#FFEFCE;padding:10px 22px">
+          Empezar la práctica</button></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div>Sol y luna <b>calculados localmente</b> con las series de Meeus — sin llamar a ningún servidor.<br>
+      El clima real llega de <b>Open-Meteo</b>. Nada se guarda fuera de tu teléfono.</div>
+    <div class="tribal">
+      <svg width="86" height="26" viewBox="0 0 86 26" fill="none" stroke="var(--siena)" stroke-width="1.6" stroke-linecap="round">
+        <path d="M4 13c0-5 4-9 9-9s9 4 9 9-3.6 7-7 7-5.4-2.4-5.4-5 2-4.4 4-4.4 3.2 1.4 3.2 3"/>
+        <path d="M82 13c0-5-4-9-9-9s-9 4-9 9 3.6 7 7 7 5.4-2.4 5.4-5-2-4.4-4-4.4-3.2 1.4-3.2 3"/>
+        <path d="M30 13h26M36 8.5h14M36 17.5h14"/>
+      </svg>
+    </div>
+  </footer>
+</div>
+
+<!-- ================= PRÁCTICA ================= -->
+<div class="practice" id="practice" role="dialog" aria-modal="true">
+  <div class="p-inner">
+    <div class="p-kicker" id="pKicker">—</div>
+    <div class="p-title" id="pTitle">—</div>
+    <div class="ring-wrap">
+      <svg class="ring" viewBox="0 0 100 100">
+        <circle class="bg" cx="50" cy="50" r="47"/>
+        <circle class="halo" id="ringHalo" cx="50" cy="50" r="47"
+          stroke-dasharray="295.3" stroke-dashoffset="0"/>
+        <circle class="fg" id="ringFg" cx="50" cy="50" r="47"
+          stroke-dasharray="295.3" stroke-dashoffset="0"/>
+      </svg>
+      <div class="breath" id="breath"><span id="breathTxt">inhalá</span></div>
+    </div>
+    <div class="p-time" id="pTime">00:00</div>
+    <div class="p-steps" id="pSteps"></div>
+    <div class="p-actions">
+      <button class="opt" id="pSound">🔈 sonido</button>
+      <button class="opt" id="pEnd">terminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= UBICACIÓN ================= -->
+<div class="sheet" id="sheet">
+  <div class="sheet-in">
+    <h3>¿Dónde estás parado?</h3>
+    <p class="note">OCASO necesita tu punto exacto: el atardecer no pasa a la misma hora
+      a 200 km de distancia.</p>
+    <button class="opt" id="useGps" style="align-self:flex-start">Usar mi ubicación</button>
+    <input id="citySearch" type="text" placeholder="o buscá una ciudad…" autocomplete="off">
+    <div class="results" id="cityResults"></div>
+    <button class="opt" id="sheetClose" style="align-self:flex-end">cerrar</button>
+  </div>
+</div>
+
+<script type="module">
+'use strict';
+
+/* ============================================================
+   1 · ASTRONOMÍA — Meeus, Astronomical Algorithms
+   Sol y luna se calculan acá; no hay API de por medio.
+   ============================================================ */
+const RAD=Math.PI/180, DEG=180/Math.PI, J1970=2440588, J2000=2451545, DAY=86400000;
+const sin=Math.sin,cos=Math.cos,tan=Math.tan,asin=Math.asin,atan=Math.atan2,acos=Math.acos;
+const toJulian=d=>d.valueOf()/DAY-0.5+J1970;
+const toDays=d=>toJulian(d)-J2000;
+const norm360=x=>((x%360)+360)%360;
+const normRad=x=>((x%(2*Math.PI))+2*Math.PI)%(2*Math.PI);
+
+const obliquity=T=>(23.4392911-0.0130042*T-1.64e-7*T*T+5.036e-7*T**3)*RAD;
+const siderealTime=(d,lw)=>(280.16+360.9856235*d)*RAD-lw;
+const rightAsc=(l,b,e)=>atan(sin(l)*cos(e)-tan(b)*sin(e),cos(l));
+const decl=(l,b,e)=>asin(sin(b)*cos(e)+cos(b)*sin(e)*sin(l));
+const alt=(H,phi,dec)=>asin(sin(phi)*sin(dec)+cos(phi)*cos(dec)*cos(H));
+const azi=(H,phi,dec)=>atan(sin(H),cos(H)*sin(phi)-tan(dec)*cos(phi));
+const parallactic=(H,phi,dec)=>atan(sin(H),tan(phi)*cos(dec)-sin(dec)*cos(H));
+
+function sunCoords(d){
+  const M=(357.5291+0.98560028*d)*RAD;
+  const C=(1.9148*sin(M)+0.02*sin(2*M)+0.0003*sin(3*M))*RAD;
+  const L=M+C+102.9372*RAD+Math.PI;
+  const T=d/36525, e=obliquity(T);
+  const ecc=0.016708634-0.000042037*T, nu=M+C;
+  const R=1.000001018*(1-ecc*ecc)/(1+ecc*cos(nu));
+  return {dec:decl(L,0,e), ra:rightAsc(L,0,e), lon:L, distKm:R*149597870.7};
+}
+function sunPosition(date,lat,lon){
+  const lw=-lon*RAD, phi=lat*RAD, d=toDays(date), c=sunCoords(d);
+  const H=siderealTime(d,lw)-c.ra;
+  return {azimuth:normRad(azi(H,phi,c.dec)+Math.PI)*DEG, altitude:alt(H,phi,c.dec)*DEG,
+          dec:c.dec, ra:c.ra, distKm:c.distKm};
+}
+
+/* Términos periódicos principales de la Luna (Meeus 47.A / 47.B) */
+const TL=[[0,0,1,0,6288774,-20905355],[2,0,-1,0,1274027,-3699111],[2,0,0,0,658314,-2955968],
+[0,0,2,0,213618,-569925],[0,1,0,0,-185116,48888],[0,0,0,2,-114332,-3149],
+[2,0,-2,0,58793,246158],[2,-1,-1,0,57066,-152138],[2,0,1,0,53322,-170733],
+[2,-1,0,0,45758,-204586],[0,1,-1,0,-40923,-129620],[1,0,0,0,-34720,108743],
+[0,1,1,0,-30383,104755],[2,0,0,-2,15327,10321],[0,0,1,2,-12528,0],
+[0,0,1,-2,10980,79661],[4,0,-1,0,10675,-34782],[0,0,3,0,10034,-23210],
+[4,0,-2,0,8548,-21636],[2,1,-1,0,-7888,24208],[2,1,0,0,-6766,30824],
+[1,0,-1,0,-5163,-8379],[1,1,0,0,4987,-16675],[2,-1,1,0,4036,-12831],
+[2,0,2,0,3994,-10445],[4,0,0,0,3861,-11650],[2,0,-3,0,3665,14403],
+[0,1,-2,0,-2689,-7003],[2,0,-1,2,-2602,0],[2,-1,-2,0,2390,10056],
+[1,0,1,0,-2348,6322],[2,-2,0,0,2236,-9884],[0,1,2,0,-2120,5751],
+[0,2,0,0,-2069,0],[2,-2,-1,0,2048,-4950],[2,0,1,-2,-1773,4130],
+[2,0,0,2,-1595,0],[4,-1,-1,0,1215,-3958],[0,0,2,2,-1110,0],
+[3,0,-1,0,-892,3258],[2,1,1,0,-810,2616],[4,-1,-2,0,759,-1897],
+[0,2,-1,0,-713,-2117],[2,2,-1,0,-700,2354],[2,1,-2,0,691,0],
+[2,-1,0,-2,596,0],[4,0,1,0,549,-1423],[0,0,4,0,537,-1117],
+[4,-1,0,0,520,-1571],[1,0,-2,0,-487,-1739],[2,1,0,-2,-399,0],
+[0,0,2,-2,-381,-4421],[1,1,1,0,351,0],[3,0,-2,0,-340,0],
+[4,0,-3,0,330,0],[2,-1,2,0,327,0],[0,2,1,0,-323,1165],
+[1,1,-1,0,299,0],[2,0,3,0,294,0],[2,0,-1,-2,0,8752]];
+const TB=[[0,0,0,1,5128122],[0,0,1,1,280602],[0,0,1,-1,277693],[2,0,0,-1,173237],
+[2,0,-1,1,55413],[2,0,-1,-1,46271],[2,0,0,1,32573],[0,0,2,1,17198],
+[2,0,1,-1,9266],[0,0,2,-1,8822],[2,-1,0,-1,8216],[2,0,-2,-1,4324],
+[2,0,1,1,4200],[2,1,0,-1,-3359],[2,-1,-1,1,2463],[2,-1,0,1,2211],
+[2,-1,-1,-1,2065],[0,1,-1,-1,-1870],[4,0,-1,-1,1828],[0,1,0,1,-1794],
+[0,0,0,3,-1749],[0,1,-1,1,-1565],[1,0,0,1,-1491],[0,1,1,1,-1475],
+[0,1,1,-1,-1410],[0,1,0,-1,-1344],[1,0,0,-1,-1335],[0,0,3,1,1107],
+[4,0,0,-1,1021],[4,0,-1,1,833],[0,0,1,-3,777],[4,0,-2,1,671],
+[2,0,0,-3,607],[2,0,2,-1,596],[2,-1,1,-1,491],[2,0,-2,1,-451],
+[0,0,3,-1,439],[2,0,2,1,422],[2,0,-3,-1,421],[2,1,-1,1,-366],
+[2,1,0,1,-351],[4,0,0,1,331],[2,-1,1,1,315],[2,-2,0,-1,302],
+[0,0,1,3,-283],[2,1,1,-1,-229],[1,1,0,-1,223],[1,1,0,1,223],
+[0,1,-2,-1,-220],[2,1,-1,-1,-220],[1,0,1,1,-185],[2,-1,-2,-1,181],
+[0,1,2,1,-177],[4,0,-2,-1,176],[4,-1,-1,-1,166],[1,0,1,-1,-164],
+[4,0,1,-1,132],[1,0,-1,-1,-119],[4,-1,0,-1,115],[2,-2,0,1,107]];
+
+function moonCoords(d){
+  const T=d/36525, T2=T*T, T3=T2*T, T4=T3*T;
+  const Lp=norm360(218.3164477+481267.88123421*T-0.0015786*T2+T3/538841-T4/65194000);
+  const D=norm360(297.8501921+445267.1114034*T-0.0018819*T2+T3/545868-T4/113065000);
+  const M=norm360(357.5291092+35999.0502909*T-0.0001536*T2+T3/24490000);
+  const Mp=norm360(134.9633964+477198.8675055*T+0.0087414*T2+T3/69699-T4/14712000);
+  const F=norm360(93.2720950+483202.0175233*T-0.0036539*T2-T3/3526000+T4/863310000);
+  const A1=norm360(119.75+131.849*T), A2=norm360(53.09+479264.290*T), A3=norm360(313.45+481266.484*T);
+  const E=1-0.002516*T-0.0000074*T2;
+  const Dr=D*RAD,Mr=M*RAD,Mpr=Mp*RAD,Fr=F*RAD;
+  let sL=0,sR=0,sB=0;
+  for(const[a,b,c,dd,cl,cr] of TL){
+    const arg=a*Dr+b*Mr+c*Mpr+dd*Fr;
+    const e=Math.abs(b)===1?E:Math.abs(b)===2?E*E:1;
+    sL+=cl*e*sin(arg); sR+=cr*e*cos(arg);
+  }
+  for(const[a,b,c,dd,cb] of TB){
+    const arg=a*Dr+b*Mr+c*Mpr+dd*Fr;
+    const e=Math.abs(b)===1?E:Math.abs(b)===2?E*E:1;
+    sB+=cb*e*sin(arg);
+  }
+  sL+=3958*sin(A1*RAD)+1962*sin((Lp-F)*RAD)+318*sin(A2*RAD);
+  sB+=-2235*sin(Lp*RAD)+382*sin(A3*RAD)+175*sin((A1-F)*RAD)+175*sin((A1+F)*RAD)
+      +127*sin((Lp-Mp)*RAD)-115*sin((Lp+Mp)*RAD);
+  const lambda=(Lp+sL/1e6)*RAD, beta=(sB/1e6)*RAD, dist=385000.56+sR/1000;
+  const e=obliquity(T);
+  return {ra:rightAsc(lambda,beta,e), dec:decl(lambda,beta,e), lambda, beta, dist,
+          parallax:asin(6378.14/dist)*DEG};
+}
+const refraction=h=>0.0002967/Math.tan(Math.max(0,h)+0.00312536/(Math.max(0,h)+0.08901179));
+function moonPosition(date,lat,lon){
+  const lw=-lon*RAD, phi=lat*RAD, d=toDays(date), c=moonCoords(d);
+  const H=siderealTime(d,lw)-c.ra, h=alt(H,phi,c.dec);
+  return {azimuth:normRad(azi(H,phi,c.dec)+Math.PI)*DEG, altitude:(h+refraction(h))*DEG,
+          altitudeGeo:h*DEG, parallax:c.parallax, distance:c.dist,
+          parallacticAngle:parallactic(H,phi,c.dec), ra:c.ra, dec:c.dec, lambda:c.lambda};
+}
+function moonIllumination(date,lat,lon){
+  const d=toDays(date), s=sunCoords(d), m=moonCoords(d);
+  const psi=acos(sin(s.dec)*sin(m.dec)+cos(s.dec)*cos(m.dec)*cos(s.ra-m.ra));
+  const inc=atan(s.distKm*sin(psi), m.dist-s.distKm*cos(psi));
+  const chi=atan(cos(s.dec)*sin(s.ra-m.ra),
+                 sin(s.dec)*cos(m.dec)-cos(s.dec)*sin(m.dec)*cos(s.ra-m.ra));
+  const phase=normRad(m.lambda-s.lon)/(2*Math.PI);
+  return {fraction:(1+cos(inc))/2, phase, phaseAngle:inc, angle:chi,
+          waxing:phase<0.5, distance:m.dist};
+}
+function moonPhaseName(p,k){
+  if(k<0.02) return 'Luna nueva';
+  if(k>0.985) return 'Luna llena';
+  if(p<0.235) return 'Luna creciente';
+  if(p<0.285) return 'Cuarto creciente';
+  if(p<0.5)   return 'Luna gibosa creciente';
+  if(p<0.515) return 'Luna llena';
+  if(p<0.735) return 'Luna gibosa menguante';
+  if(p<0.785) return 'Cuarto menguante';
+  return 'Luna menguante';
+}
+function nextMoonEvent(date,target){
+  const f=t=>{const d=toDays(t);
+    let v=norm360((moonCoords(d).lambda-sunCoords(d).lon)*DEG)-target;
+    return v>180?v-360:v<-180?v+360:v;};
+  let t0=new Date(date.getTime()+6e4), v0=f(t0);
+  for(let i=0;i<160;i++){
+    const t1=new Date(t0.getTime()+0.25*DAY), v1=f(t1);
+    if(v0<0&&v1>=0){
+      let a=t0.getTime(),b=t1.getTime();
+      for(let j=0;j<40;j++){const m=(a+b)/2; if(f(new Date(m))<0)a=m;else b=m;}
+      return new Date((a+b)/2);
+    }
+    t0=t1; v0=v1;
+  }
+  return null;
+}
+function riseSet(date,lat,lon,body,h0){
+  const H0=typeof h0==='function'?h0:()=>h0;
+  const g=t=>{const p=body(t,lat,lon);
+    return (p.altitudeGeo!==undefined?p.altitudeGeo:p.altitude)-H0(p);};
+  const start=new Date(date); start.setHours(0,0,0,0);
+  let rise=null,set=null,pt=start,ph=g(start);
+  for(let m=10;m<=1440;m+=10){
+    const t=new Date(start.getTime()+m*6e4), hh=g(t);
+    if(ph<0&&hh>=0&&!rise) rise=refine(pt,t,g);
+    if(ph>=0&&hh<0&&!set)  set=refine(pt,t,g);
+    pt=t; ph=hh;
+    if(rise&&set) break;
+  }
+  return {rise,set};
+}
+function refine(a,b,g){
+  let lo=a.getTime(),hi=b.getTime(); const s=g(new Date(lo))<0;
+  for(let i=0;i<26;i++){const m=(lo+hi)/2; if((g(new Date(m))<0)===s)lo=m;else hi=m;}
+  return new Date((lo+hi)/2);
+}
+const sunTimes=(d,la,lo)=>{
+  const rs=riseSet(d,la,lo,sunPosition,-0.833);
+  const civ=riseSet(d,la,lo,sunPosition,-6);
+  const gold=riseSet(d,la,lo,sunPosition,6);
+  return {sunrise:rs.rise, sunset:rs.set, dawn:civ.rise, dusk:civ.set,
+          goldenStart:gold.set, goldenEndAM:gold.rise};
+};
+const moonTimes=(d,la,lo)=>riseSet(d,la,lo,moonPosition,p=>0.7275*p.parallax-0.5666);
+
+/* ============================================================
+   2 · LUNA 3D — mapa de altura y albedo procedurales
+   ============================================================ */
+const MW=1024, MH=512;
+function mulberry(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);
+  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function makeNoise(seed){
+  const rnd=mulberry(seed), P=new Uint8Array(512), perm=new Uint8Array(256);
+  for(let i=0;i<256;i++)perm[i]=i;
+  for(let i=255;i>0;i--){const j=(rnd()*(i+1))|0;const t=perm[i];perm[i]=perm[j];perm[j]=t;}
+  for(let i=0;i<512;i++)P[i]=perm[i&255];
+  const G=new Float32Array(256); for(let i=0;i<256;i++)G[i]=rnd();
+  const fade=t=>t*t*(3-2*t);
+  return (x,y)=>{
+    const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi;
+    const u=fade(xf),v=fade(yf),X=xi&255,Y=yi&255;
+    const a=G[P[X+P[Y]]],b=G[P[X+1+P[Y]]],c=G[P[X+P[Y+1]]],d=G[P[X+1+P[Y+1]]];
+    const t1=a+(b-a)*u, t2=c+(d-c)*u;
+    return t1+(t2-t1)*v;
+  };
+}
+function sphereBlob(ctx,lon,lat,rDeg,draw){
+  const cx=((lon+180)/360)*MW, cy=((90-lat)/180)*MH;
+  const kx=MW/360, ky=MH/180;
+  const stretch=1/Math.max(0.30,Math.cos(lat*RAD));
+  for(const off of [-MW,0,MW]){
+    ctx.save(); ctx.translate(cx+off,cy);
+    ctx.scale(stretch*kx*rDeg, ky*rDeg); draw(ctx); ctx.restore();
+  }
+}
+const MARIA=[
+  [-55,20,32,.50,1.35],[-19,34,22,.44,1.15],[17,28,15,.42,.85],[31,8,16,.45,.95],
+  [52,-8,13,.46,.85],[59,17,10,.40,.45],[34,-15,10,.47,.75],[-17,-21,13,.49,1.05],
+  [-39,-24,10,.47,.75],[-12,57,11,.52,1.9],[3,13,7,.52,.65],[-25,6,9,.55,.85],
+  [-64,-14,12,.57,1.15],[25,46,8,.55,.85],[69,-3,8,.50,.75],[-40,45,9,.58,1.1],
+  [8,-42,7,.62,.9]];
+const RAYC=[[-11,-43,4.3,48,1.15],[-20,10,4.6,22,.75],[-38,8,3.2,16,.6],
+  [-47,24,1.7,11,.5],[60,-10,3,12,.45],[-8,-58,3.4,10,.4]];
+
+function mareLobes(lon,lat,r,irr,noise){
+  const lobes=[[0,0,1]], k=2+Math.round(irr*2.6);
+  for(let i=0;i<k;i++){
+    const th=noise(i*4.7+lon*.13,lat*.11)*Math.PI*2;
+    const d=(.35+.55*noise(i*2.9+lat*.2,lon*.07))*irr;
+    const rr=.42+.44*noise(i*8.1,lon*.05+lat*.03);
+    lobes.push([Math.cos(th)*d,Math.sin(th)*d,rr]);
+  }
+  return lobes;
+}
+function wobbly(c,sa,sb,noise,irr){
+  c.beginPath();
+  for(let i=0;i<=44;i++){
+    const th=(i/44)*Math.PI*2;
+    const w=.78+.34*noise(Math.cos(th)*2.2+sa,Math.sin(th)*2.2+sb)*(.5+irr*.6);
+    const rr=Math.min(1.22,w);
+    const X=Math.cos(th)*rr,Y=Math.sin(th)*rr;
+    i?c.lineTo(X,Y):c.moveTo(X,Y);
+  }
+  c.closePath();
+}
+function drawCrater(h,lon,lat,r,seed,big){
+  sphereBlob(h,lon,lat,r*2,c=>{
+    const g=c.createRadialGradient(0,0,.45,0,0,1);
+    g.addColorStop(0,'rgba(150,150,150,.30)'); g.addColorStop(1,'rgba(128,128,128,0)');
+    c.fillStyle=g; c.beginPath(); c.arc(0,0,1,0,7); c.fill();
+  });
+  sphereBlob(h,lon,lat,r,c=>{
+    const w=.06*(seed-.5); c.rotate(seed*6.28); c.scale(1+w,1-w);
+    const gr=c.createRadialGradient(0,0,.55,0,0,1.02);
+    gr.addColorStop(0,'rgba(128,128,128,0)'); gr.addColorStop(.74,'rgba(196,196,196,.75)');
+    gr.addColorStop(.90,'rgba(210,210,210,.85)'); gr.addColorStop(1,'rgba(128,128,128,0)');
+    c.fillStyle=gr; c.beginPath(); c.arc(0,0,1.02,0,7); c.fill();
+    const gf=c.createRadialGradient(0,0,0,0,0,.82);
+    gf.addColorStop(0,'rgba(58,58,58,.92)'); gf.addColorStop(.7,'rgba(72,72,72,.86)');
+    gf.addColorStop(1,'rgba(128,128,128,0)');
+    c.fillStyle=gf; c.beginPath(); c.arc(0,0,.82,0,7); c.fill();
+    if(big||(r>2.2&&seed>.45)){
+      const gp=c.createRadialGradient(0,0,0,0,0,.26);
+      gp.addColorStop(0,'rgba(186,186,186,.9)'); gp.addColorStop(1,'rgba(128,128,128,0)');
+      c.fillStyle=gp; c.beginPath(); c.arc(0,0,.26,0,7); c.fill();
+    }
+  });
+}
+function makeSpray(){
+  const c=document.createElement('canvas'); c.width=c.height=64;
+  const x=c.getContext('2d'), g=x.createRadialGradient(32,32,0,32,32,32);
+  g.addColorStop(0,'rgba(255,253,248,.9)'); g.addColorStop(.45,'rgba(255,252,246,.34)');
+  g.addColorStop(1,'rgba(255,252,246,0)');
+  x.fillStyle=g; x.fillRect(0,0,64,64); return c;
+}
+/* rayos de eyección con técnica de aerógrafo */
+function drawRays(a,lon,lat,r,lenDeg,inten,noise,spray){
+  for(let i=0;i<46;i++){
+    const th=(i/46)*Math.PI*2+(noise(i*3.1,lon*.1)-.5)*.9;
+    const len=lenDeg*(.28+.72*noise(i*7.7,lat*.5));
+    if(len<r*2) continue;
+    sphereBlob(a,lon,lat,1,c=>{
+      c.rotate(th); const t0=r*1.05;
+      for(let s=0;s<22;s++){
+        const f=s/22, t=t0+(len-t0)*f;
+        const fall=Math.pow(1-f,1.6)*(.55+.45*noise(s*2.3+i*5,4.4));
+        const jit=(noise(s*1.31+i*9,7.7)-.5)*t*.11;
+        const rad=r*.2+t*.052;
+        c.globalAlpha=Math.min(.5,.075*inten*fall);
+        c.drawImage(spray,t-rad,jit-rad,rad*2,rad*2);
+      }
+    });
+  }
+  sphereBlob(a,lon,lat,r*3.2,c=>{
+    const g=c.createRadialGradient(0,0,.12,0,0,1);
+    g.addColorStop(0,`rgba(246,244,239,${.20*inten})`);
+    g.addColorStop(.3,`rgba(238,236,231,${.10*inten})`);
+    g.addColorStop(1,'rgba(238,236,231,0)');
+    c.fillStyle=g; c.beginPath(); c.arc(0,0,1,0,7); c.fill();
+  });
+}
+function buildMoonMaps(){
+  const noise=makeNoise(20260823), noise2=makeNoise(77123);
+  const ac=document.createElement('canvas'); ac.width=MW; ac.height=MH;
+  const a=ac.getContext('2d',{willReadFrequently:true});
+  a.fillStyle='#a9a49c'; a.fillRect(0,0,MW,MH);
+  const img=a.getImageData(0,0,MW,MH), px=img.data;
+  for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){
+    const lat=90-(y/MH)*180, cl=Math.max(.1,Math.cos(lat*RAD));
+    let n=0,amp=1,f=.012/cl,fy=.012,tot=0;
+    for(let o=0;o<5;o++){n+=amp*noise(x*f,y*fy);tot+=amp;amp*=.55;f*=2.1;fy*=2.1;}
+    n/=tot; const v=171+(n-.5)*54, i=(y*MW+x)*4;
+    px[i]=v*1.02; px[i+1]=v; px[i+2]=v*.955; px[i+3]=255;
+  }
+  a.putImageData(img,0,0);
+  for(const[lon,lat,r,dark,irr] of MARIA){
+    mareLobes(lon,lat,r,irr,noise).forEach(([dx,dy,rr],li)=>{
+      const ll=lon+dx*r/Math.max(.3,Math.cos(lat*RAD));
+      const la=Math.max(-88,Math.min(88,lat+dy*r));
+      sphereBlob(a,ll,la,r*rr,c=>{
+        wobbly(c,lon*.3+li*3.7,lat*.3+li*1.9,noise,irr);
+        const g=c.createRadialGradient(0,0,.1,0,0,1.18);
+        const b=Math.round(168*dark*(.94+.12*noise(li*5.5,lon*.2)));
+        g.addColorStop(0,`rgba(${b},${b+2},${b+7},.9)`);
+        g.addColorStop(.66,`rgba(${b+6},${b+8},${b+13},.74)`);
+        g.addColorStop(1,`rgba(${b+30},${b+30},${b+34},0)`);
+        c.fillStyle=g; c.fill();
+      });
+    });
+  }
+  const i2=a.getImageData(0,0,MW,MH), p2=i2.data;
+  for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){
+    const i=(y*MW+x)*4;
+    if(p2[i]<128){const d=(noise2(x*.035,y*.035)-.5)*16; p2[i]+=d;p2[i+1]+=d;p2[i+2]+=d;}
+  }
+  a.putImageData(i2,0,0);
+
+  const hc=document.createElement('canvas'); hc.width=MW; hc.height=MH;
+  const h=hc.getContext('2d',{willReadFrequently:true});
+  h.fillStyle='#808080'; h.fillRect(0,0,MW,MH);
+  const hi=h.getImageData(0,0,MW,MH), hp=hi.data;
+  for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){
+    const lat=90-(y/MH)*180, cl=Math.max(.12,Math.cos(lat*RAD));
+    let n=0,amp=1,f=.008/cl,fy=.008,tot=0;
+    for(let o=0;o<4;o++){n+=amp*noise2(x*f,y*fy);tot+=amp;amp*=.42;f*=2.3;fy*=2.3;}
+    n/=tot; const i=(y*MW+x)*4, v=128+(n/1-.5)*30;
+    hp[i]=hp[i+1]=hp[i+2]=v; hp[i+3]=255;
+  }
+  h.putImageData(hi,0,0);
+  for(const[lon,lat,r,,irr] of MARIA){
+    mareLobes(lon,lat,r,irr,noise).forEach(([dx,dy,rr],li)=>{
+      const ll=lon+dx*r/Math.max(.3,Math.cos(lat*RAD));
+      const la=Math.max(-88,Math.min(88,lat+dy*r));
+      sphereBlob(h,ll,la,r*rr*.96,c=>{
+        wobbly(c,lon*.3+li*3.7,lat*.3+li*1.9,noise,irr);
+        const g=c.createRadialGradient(0,0,.1,0,0,1.1);
+        g.addColorStop(0,'rgba(123,123,123,.88)'); g.addColorStop(.78,'rgba(125,125,125,.62)');
+        g.addColorStop(1,'rgba(128,128,128,0)');
+        c.fillStyle=g; c.fill();
+      });
+    });
+  }
+  const rnd=mulberry(4242), craters=[];
+  for(let i=0;i<900;i++){
+    const lon=rnd()*360-180, lat=asin(rnd()*2-1)*DEG;
+    if(Math.abs(lat)>74) continue;
+    const r=.42*Math.pow(1-rnd(),-.58);
+    if(r>9) continue;
+    craters.push([lon,lat,r,rnd()]);
+  }
+  const isMare=(lon,lat)=>MARIA.some(([ml,mla,mr])=>{
+    const dl=((lon-ml+540)%360-180)*Math.cos(lat*RAD);
+    return Math.hypot(dl,lat-mla)<mr*.85;});
+  craters.sort((p,q)=>q[2]-p[2]);
+  for(const[lon,lat,r,seed] of craters){
+    if(isMare(lon,lat)&&seed>.22) continue;
+    drawCrater(h,lon,lat,r,seed);
+  }
+  for(const[lon,lat,r] of RAYC) drawCrater(h,lon,lat,r,.5,true);
+  const spray=makeSpray();
+  for(const[lon,lat,r,len,it] of RAYC) drawRays(a,lon,lat,r,len,it,noise2,spray);
+
+  const albedo=new Uint8ClampedArray(MW*MH), ad=a.getImageData(0,0,MW,MH).data;
+  for(let i=0;i<MW*MH;i++) albedo[i]=ad[i*4];
+  const HS=.0075, height=new Float32Array(MW*MH), hd=h.getImageData(0,0,MW,MH).data;
+  for(let i=0;i<MW*MH;i++) height[i]=((hd[i*4]-128)/128)*HS;
+  const slopeE=new Float32Array(MW*MH), slopeN=new Float32Array(MW*MH);
+  const dLon=2*Math.PI/MW, dLat=Math.PI/MH;
+  for(let y=0;y<MH;y++){
+    const lat=Math.PI/2-(y+.5)*dLat, cl=Math.max(.32,Math.cos(lat));
+    const iE=1/(2*dLon*cl), iN=1/(2*dLat);
+    for(let x=0;x<MW;x++){
+      const i=y*MW+x, xm=(x-1+MW)%MW, xp=(x+1)%MW;
+      slopeE[i]=(height[y*MW+xp]-height[y*MW+xm])*iE;
+      const ym=Math.max(0,y-1), yp=Math.min(MH-1,y+1);
+      slopeN[i]=(height[yp*MW+x]-height[ym*MW+x])*iN;
+    }
+  }
+  return {albedo,slopeE,slopeN};
+}
+function bil(arr,u,v){
+  const x0=Math.floor(u), y0=Math.floor(v), fx=u-x0, fy=v-y0;
+  const xa=((x0%MW)+MW)%MW, xb=(xa+1)%MW;
+  const ya=Math.max(0,Math.min(MH-1,y0)), yb=Math.max(0,Math.min(MH-1,y0+1));
+  const a=arr[ya*MW+xa],b=arr[ya*MW+xb],c=arr[yb*MW+xa],d=arr[yb*MW+xb];
+  const t1=a+(b-a)*fx, t2=c+(d-c)*fx;
+  return t1+(t2-t1)*fy;
+}
+const smooth01=(x,e0,e1)=>{const t=Math.max(0,Math.min(1,(x-e0)/(e1-e0)));return t*t*(3-2*t);};
+
+function renderMoon(ctx,maps,o){
+  const {size,phaseAngle,lightDir=[-1,0],libLon=0,libLat=0,tilt=0,
+         earthshine=.042,bump=.75}=o;
+  const {albedo,slopeE,slopeN}=maps;
+  const img=ctx.createImageData(size,size), px=img.data, R=size/2;
+  const DR=R*0.84; // el disco deja aire para el halo, que muere dentro del círculo inscrito
+  const sp=sin(phaseAngle), cp=cos(phaseAngle);
+  const ll=Math.hypot(lightDir[0],lightDir[1])||1;
+  const Lx=sp*lightDir[0]/ll, Ly=sp*lightDir[1]/ll, Lz=cp;
+  const rl=libLon*RAD, rb=libLat*RAD, cR=cos(rb), sR=sin(rb), cT=cos(tilt), sT=sin(tilt);
+  for(let py=0;py<size;py++){
+    const sy=(py+.5-R)/R;
+    for(let pxi=0;pxi<size;pxi++){
+      const sx=(pxi+.5-R)/DR, r2=sx*sx+sy*sy, o4=(py*size+pxi)*4;
+      if(r2>=1){ px[o4+3]=0; continue; }
+      const nz=Math.sqrt(1-r2);
+      let nx=sx, ny=-sy;
+      const tx=nx*cT-ny*sT, ty=nx*sT+ny*cT; nx=tx; ny=ty;
+      const y2=ny*cR-nz*sR, z2=ny*sR+nz*cR;
+      const lat=asin(Math.max(-1,Math.min(1,y2)));
+      const lon=atan(nx,z2)+rl;
+      let u=(lon/(2*Math.PI)+.5)*MW; u=((u%MW)+MW)%MW;
+      const v=(.5-lat/Math.PI)*MH;
+      const alb=bil(albedo,u,v)/255;
+      const se=bil(slopeE,u,v), sn=bil(slopeN,u,v);
+      const cl=cos(lat), sl=sin(lat), clo=cos(lon-rl), slo=sin(lon-rl);
+      const Tx=clo, Tz=-slo;
+      const Bx=-slo*sl, By=cl, Bz=-clo*sl;
+      let Nx=nx-bump*(se*Tx+sn*Bx);
+      let Ny=ny-bump*(sn*By);
+      let Nz=nz-bump*(se*Tz+sn*Bz);
+      const inv=1/Math.hypot(Nx,Ny,Nz); Nx*=inv; Ny*=inv; Nz*=inv;
+      const ndl=Nx*Lx+Ny*Ly+Nz*Lz, ndv=Math.max(.02,Nz);
+      let lum=0;
+      if(ndl>0) lum=.28*ndl+.72*(ndl/(ndl+ndv))*1.55;
+      const soft=smooth01(ndl,-.035,.045);
+      lum*=soft;
+      const es=earthshine*(.55+.45*ndv);
+      let val=alb*(lum+es*(1-soft));
+      val*=(1-.10*Math.pow(1-nz,3));
+      let r=val*262, g=val*254, b=val*240;
+      if(lum<.08){r+=3;g+=8;b+=16;}
+      const cov=Math.min(1,(1-Math.sqrt(r2))*DR*1.4);
+      px[o4]=r; px[o4+1]=g; px[o4+2]=b; px[o4+3]=255*Math.max(0,Math.min(1,cov));
+    }
+  }
+  ctx.clearRect(0,0,size,size); ctx.putImageData(img,0,0);
+  // el resplandor va detrás del disco, dentro del propio canvas:
+  // un drop-shadow de CSS deja un cuadrado sobre los paneles esmerilados
+  ctx.save();
+  ctx.globalCompositeOperation='destination-over';
+  const hg=ctx.createRadialGradient(R,R,DR*.94,R,R,R);
+  hg.addColorStop(0,'rgba(190,226,232,.22)');
+  hg.addColorStop(.40,'rgba(150,196,206,.08)');
+  hg.addColorStop(1,'rgba(120,170,180,0)');
+  ctx.fillStyle=hg;
+  ctx.beginPath(); ctx.arc(R,R,R,0,7); ctx.fill(); // nunca hasta las esquinas
+  ctx.restore();
+}
+
+/* ============================================================
+   3 · SOL 3D — esfera de plasma con granulación animada
+   ============================================================ */
+function makeGranules(seed,size){
+  const c=document.createElement('canvas'); c.width=c.height=size;
+  const x=c.getContext('2d'), img=x.createImageData(size,size), p=img.data;
+  const n1=makeNoise(seed), n2=makeNoise(seed+991);
+  for(let y=0;y<size;y++)for(let i=0;i<size;i++){
+    let v=0,amp=1,f=.055,tot=0;
+    for(let o=0;o<4;o++){v+=amp*n1(i*f,y*f);tot+=amp;amp*=.5;f*=2.2;}
+    v/=tot;
+    const w=n2(i*.014,y*.014);
+    const g=Math.max(0,Math.min(255,110+(v-.5)*270+(w-.5)*90));
+    const k=(y*size+i)*4; p[k]=p[k+1]=p[k+2]=g; p[k+3]=255;
+  }
+  x.putImageData(img,0,0); return c;
+}
+let granA=null,granB=null;
+function drawSun(ctx,size,t,elev){
+  const R=size*0.255, cx=size/2, cy=size/2;
+  ctx.clearRect(0,0,size,size);
+  // por debajo del horizonte el sol no se apaga: se vuelve brasa
+  const up=smooth01(elev,-8,3);
+  const ember=1-up;
+
+  /* --- corona --- */
+  const co=ctx.createRadialGradient(cx,cy,R*.9,cx,cy,R*1.94);
+  co.addColorStop(0,`rgba(255,${172+40*up},${70+40*up},${.16+.26*up})`);
+  co.addColorStop(.28,`rgba(244,132,42,${.07+.12*up})`);
+  co.addColorStop(.65,`rgba(196,68,24,${.02+.05*up})`);
+  co.addColorStop(1,'rgba(170,50,20,0)');
+  ctx.fillStyle=co; ctx.beginPath(); ctx.arc(cx,cy,R*1.94,0,7); ctx.fill();
+
+  /* --- rayos largos y suaves, girando lento --- */
+  ctx.save(); ctx.translate(cx,cy); ctx.rotate(t*0.000035);
+  for(let i=0;i<14;i++){
+    const a=(i/14)*Math.PI*2;
+    const len=R*(1.30+.34*Math.sin(t*0.0005+i*2.1));
+    const g=ctx.createLinearGradient(0,0,Math.cos(a)*len,Math.sin(a)*len);
+    g.addColorStop(0,`rgba(255,190,92,${.05+.13*up})`);
+    g.addColorStop(1,'rgba(255,170,60,0)');
+    ctx.strokeStyle=g; ctx.lineWidth=R*.26; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(Math.cos(a)*R,Math.sin(a)*R);
+    ctx.lineTo(Math.cos(a)*len,Math.sin(a)*len); ctx.stroke();
+  }
+  ctx.restore();
+
+  /* --- disco --- */
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.clip();
+
+  // fotosfera: blanco caliente al centro, bermellón en el borde
+  const core=ctx.createRadialGradient(cx,cy,0,cx,cy,R);
+  core.addColorStop(0,   '#FFFEF8');
+  core.addColorStop(.24, '#FFF4CE');
+  core.addColorStop(.52, '#FFD86E');
+  core.addColorStop(.78, '#F7A736');
+  core.addColorStop(.93, '#E4711D');
+  core.addColorStop(1,   '#C24C12');
+  ctx.fillStyle=core; ctx.fillRect(cx-R,cy-R,R*2,R*2);
+
+  // granulación: dos capas girando en sentidos opuestos
+  if(granA){
+    for(const [tex,sc,spd,al,mode] of [
+      [granA,2.3, .00006,.55,'soft-light'],
+      [granB,1.45,-.00010,.34,'soft-light'],
+      [granA,3.1, .00013,.10,'multiply']]){
+      ctx.save(); ctx.globalCompositeOperation=mode; ctx.globalAlpha=al;
+      ctx.translate(cx,cy); ctx.rotate(t*spd);
+      const q=R*sc; ctx.drawImage(tex,-q,-q,q*2,q*2); ctx.restore();
+    }
+  }
+
+  // oscurecimiento del limbo: I = 1 − u(1 − cosθ). Es lo que da la esfera.
+  const lb=ctx.createRadialGradient(cx,cy,0,cx,cy,R);
+  for(let i=0;i<=8;i++){
+    const r=i/8, mu=Math.sqrt(Math.max(0,1-r*r));
+    lb.addColorStop(r,`rgba(96,26,6,${(0.40*(1-mu)).toFixed(3)})`);
+  }
+  ctx.fillStyle=lb; ctx.fillRect(cx-R,cy-R,R*2,R*2);
+
+  // manchas solares
+  for(let i=0;i<3;i++){
+    const a=t*0.000028+i*2.3, rr=R*(.28+.19*i);
+    const px=cx+Math.cos(a)*rr, py=cy+Math.sin(a*.7)*rr*.55;
+    const g=ctx.createRadialGradient(px,py,0,px,py,R*.12);
+    g.addColorStop(0,'rgba(84,20,4,.55)'); g.addColorStop(.55,'rgba(120,44,10,.28)');
+    g.addColorStop(1,'rgba(140,60,14,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(px,py,R*.12,0,7); ctx.fill();
+  }
+
+  // brasa: cuando está bajo el horizonte se enfría hacia el rojo profundo
+  if(ember>0.01){
+    ctx.globalCompositeOperation='multiply';
+    ctx.fillStyle=`rgba(${Math.round(255-90*ember)},${Math.round(255-150*ember)},${Math.round(255-190*ember)},1)`;
+    ctx.fillRect(cx-R,cy-R,R*2,R*2);
+    ctx.globalCompositeOperation='source-over';
+  }
+  ctx.restore();
+
+  // cromosfera: filo brillante justo adentro del borde
+  ctx.save();
+  ctx.globalCompositeOperation='lighter';
+  ctx.strokeStyle=`rgba(255,${150+50*up},${60+40*up},${.20+.30*up})`;
+  ctx.lineWidth=Math.max(1.2,R*.045);
+  ctx.beginPath(); ctx.arc(cx,cy,R*.985,0,7); ctx.stroke();
+  ctx.restore();
+
+  // contorno de tinta: el trazo grueso del sistema
+  ctx.strokeStyle=`rgba(20,13,8,${.35+.25*ember})`;
+  ctx.lineWidth=Math.max(2,size*.0075);
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.stroke();
+}
+
+/* ============================================================
+   4 · EL RELOJ DE LUZ — el fondo es un dato, no una imagen
+   ============================================================ */
+const lerp=(a,b,t)=>a+(b-a)*t;
+const hex2rgb=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+const rgb2hex=c=>'#'+c.map(v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,'0')).join('');
+/* mezcla en luz lineal: evita los grises embarrados del punto medio */
+function mixCol(a,b,t){
+  const A=hex2rgb(a),B=hex2rgb(b);
+  return rgb2hex([0,1,2].map(i=>{
+    const x=Math.pow(A[i]/255,2.2), y=Math.pow(B[i]/255,2.2);
+    return Math.pow(lerp(x,y,t),1/2.2)*255;
+  }));
+}
+/* paleta por altura solar: de dorado a marrón profundo a negro noche */
+const RAMP=[
+  {h:-90,s:['#150F0A','#0C0806','#050403'],glow:'#3A2A1C',a:.08,ac:'#3FB3A6',cool:1},
+  {h:-18,s:['#1C1409','#100A06','#070504'],glow:'#4E3620',a:.10,ac:'#5FA8B8',cool:1},
+  {h:-9, s:['#2A170F','#170D08','#090604'],glow:'#7A4024',a:.16,ac:'#C77BA0',cool:.70},
+  {h:-4, s:['#4A1F16','#2A110C','#0E0706'],glow:'#C43A22',a:.24,ac:'#E8623A',cool:.30},
+  {h:0,  s:['#6B3119','#38180F','#120907'],glow:'#E05A26',a:.28,ac:'#F2853A',cool:.10},
+  {h:5,  s:['#7A3C1C','#3F1D10','#150A07'],glow:'#E8762A',a:.28,ac:'#F2A03A',cool:0},
+  {h:14, s:['#7E4B22','#452612','#180D08'],glow:'#E89434',a:.25,ac:'#F2B32E',cool:0},
+  {h:32, s:['#78552A','#452A15','#1A0F09'],glow:'#E8AC50',a:.21,ac:'#F2B32E',cool:0},
+  {h:58, s:['#6E5730','#432B18','#1C110B'],glow:'#EDC078',a:.19,ac:'#F2B32E',cool:0},
+];
+function skyFor(elev){
+  let i=0; while(i<RAMP.length-1&&elev>RAMP[i+1].h) i++;
+  const A=RAMP[i], B=RAMP[Math.min(RAMP.length-1,i+1)];
+  const t=B.h===A.h?0:Math.max(0,Math.min(1,(elev-A.h)/(B.h-A.h)));
+  return {
+    s:[0,1,2].map(k=>mixCol(A.s[k],B.s[k],t)),
+    glow:mixCol(A.glow,B.glow,t), a:lerp(A.a,B.a,t),
+    ac:mixCol(A.ac,B.ac,t), cool:lerp(A.cool,B.cool,t)
+  };
+}
+
+/* ============================================================
+   5 · SONIDO — ambientes sintetizados con WebAudio
+   ============================================================ */
+const Sound=(()=>{
+  let ac=null, master=null, nodes=[], current='viento', timer=null;
+  const ensure=()=>{
+    if(!ac){
+      const C=window.AudioContext||window.webkitAudioContext;
+      if(!C) return null;
+      ac=new C();
+      master=ac.createGain(); master.gain.value=0; master.connect(ac.destination);
+    }
+    if(ac.state==='suspended') ac.resume();
+    return ac;
+  };
+  const noiseBuf=(type)=>{
+    const len=ac.sampleRate*4, b=ac.createBuffer(1,len,ac.sampleRate), d=b.getChannelData(0);
+    let last=0;
+    for(let i=0;i<len;i++){
+      const w=Math.random()*2-1;
+      if(type==='brown'){ last=(last+.02*w)/1.02; d[i]=last*3.5; }
+      else if(type==='pink'){ last=.96*last+.04*w; d[i]=(last*2+w*.4); }
+      else d[i]=w;
+    }
+    return b;
+  };
+  const src=(type,loop=true)=>{
+    const s=ac.createBufferSource(); s.buffer=noiseBuf(type); s.loop=loop; return s;
+  };
+  const stopAll=()=>{
+    nodes.forEach(n=>{try{n.stop?n.stop():n.disconnect();}catch(e){}});
+    nodes=[]; if(timer){clearInterval(timer); timer=null;}
+  };
+  const build=(kind)=>{
+    stopAll();
+    if(!ac) return;
+    const out=ac.createGain(); out.gain.value=1; out.connect(master); nodes.push(out);
+    if(kind==='silencio') return;
+    if(kind==='viento'){
+      const s=src('brown'), f=ac.createBiquadFilter(); f.type='bandpass'; f.Q.value=.7;
+      f.frequency.value=420;
+      const g=ac.createGain(); g.gain.value=.5;
+      const lfo=ac.createOscillator(), lg=ac.createGain();
+      lfo.frequency.value=.055; lg.gain.value=300;
+      lfo.connect(lg); lg.connect(f.frequency); lfo.start();
+      const lfo2=ac.createOscillator(), lg2=ac.createGain();
+      lfo2.frequency.value=.09; lg2.gain.value=.28;
+      lfo2.connect(lg2); lg2.connect(g.gain); lfo2.start();
+      s.connect(f); f.connect(g); g.connect(out); s.start();
+      nodes.push(s,lfo,lfo2);
+    }
+    if(kind==='agua'){
+      const s=src('white'), f=ac.createBiquadFilter(); f.type='bandpass';
+      f.frequency.value=1500; f.Q.value=.55;
+      const g=ac.createGain(); g.gain.value=.16;
+      s.connect(f); f.connect(g); g.connect(out); s.start(); nodes.push(s);
+      timer=setInterval(()=>{ // gotas
+        if(!ac||ac.state!=='running') return;
+        const o=ac.createOscillator(), og=ac.createGain(), bp=ac.createBiquadFilter();
+        bp.type='bandpass'; bp.frequency.value=700+Math.random()*1800; bp.Q.value=9;
+        o.type='sine'; o.frequency.setValueAtTime(900+Math.random()*1400,ac.currentTime);
+        o.frequency.exponentialRampToValueAtTime(300+Math.random()*300,ac.currentTime+.13);
+        og.gain.setValueAtTime(.0001,ac.currentTime);
+        og.gain.exponentialRampToValueAtTime(.09,ac.currentTime+.006);
+        og.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+.28);
+        o.connect(bp); bp.connect(og); og.connect(out); o.start(); o.stop(ac.currentTime+.32);
+      },420);
+    }
+    if(kind==='fuego'){
+      const s=src('brown'), f=ac.createBiquadFilter(); f.type='lowpass'; f.frequency.value=220;
+      const g=ac.createGain(); g.gain.value=.55;
+      s.connect(f); f.connect(g); g.connect(out); s.start(); nodes.push(s);
+      timer=setInterval(()=>{ // chisporroteo
+        if(!ac||ac.state!=='running') return;
+        const n=Math.random()<.45?2:1;
+        for(let i=0;i<n;i++){
+          const cs=src('white',false), bp=ac.createBiquadFilter(), cg=ac.createGain();
+          bp.type='bandpass'; bp.frequency.value=1200+Math.random()*3200; bp.Q.value=4;
+          const t0=ac.currentTime+Math.random()*.12;
+          cg.gain.setValueAtTime(.0001,t0);
+          cg.gain.exponentialRampToValueAtTime(.05+Math.random()*.09,t0+.004);
+          cg.gain.exponentialRampToValueAtTime(.0001,t0+.05+Math.random()*.07);
+          cs.connect(bp); bp.connect(cg); cg.connect(out); cs.start(t0); cs.stop(t0+.2);
+        }
+      },170);
+    }
+    if(kind==='tela'){
+      const s=src('pink'), f=ac.createBiquadFilter(); f.type='lowpass'; f.frequency.value=1400;
+      const g=ac.createGain(); g.gain.value=.001;
+      const lfo=ac.createOscillator(), lg=ac.createGain();
+      lfo.frequency.value=.13; lg.gain.value=.13;
+      lfo.connect(lg); lg.connect(g.gain); lfo.start();
+      g.gain.value=.15;
+      s.connect(f); f.connect(g); g.connect(out); s.start(); nodes.push(s,lfo);
+    }
+  };
+  return {
+    set(kind){ current=kind; if(ac&&master.gain.value>0.001) build(kind); },
+    get current(){ return current; },
+    start(kind){
+      if(!ensure()) return false;
+      build(kind||current);
+      master.gain.cancelScheduledValues(ac.currentTime);
+      master.gain.setValueAtTime(Math.max(.0001,master.gain.value),ac.currentTime);
+      master.gain.linearRampToValueAtTime(.6,ac.currentTime+2.2);
+      return true;
+    },
+    stop(){
+      if(!ac) return;
+      master.gain.cancelScheduledValues(ac.currentTime);
+      master.gain.setValueAtTime(master.gain.value,ac.currentTime);
+      master.gain.linearRampToValueAtTime(0,ac.currentTime+1.1);
+      setTimeout(stopAll,1300);
+    },
+    get on(){ return !!ac && master.gain.value>.01; },
+    bell(){
+      if(!ensure()) return;
+      const t0=ac.currentTime;
+      [196,294,392,588].forEach((f,i)=>{
+        const o=ac.createOscillator(), g=ac.createGain();
+        o.type='sine'; o.frequency.value=f;
+        g.gain.setValueAtTime(.0001,t0);
+        g.gain.exponentialRampToValueAtTime(.16/(i+1.1),t0+.02);
+        g.gain.exponentialRampToValueAtTime(.0001,t0+3.4+i*.5);
+        o.connect(g); g.connect(ac.destination); o.start(t0); o.stop(t0+4.6);
+      });
+    }
+  };
+})();
+
+/* ============================================================
+   6 · ESTADO Y RENDER
+   ============================================================ */
+const $=s=>document.querySelector(s);
+const CITIES=[
+  {name:'Córdoba',adm:'Argentina',lat:-31.4201,lon:-64.1888},
+  {name:'Buenos Aires',adm:'Argentina',lat:-34.6037,lon:-58.3816},
+  {name:'Rosario',adm:'Argentina',lat:-32.9442,lon:-60.6505},
+  {name:'Mendoza',adm:'Argentina',lat:-32.8895,lon:-68.8458},
+  {name:'Bariloche',adm:'Argentina',lat:-41.1335,lon:-71.3103},
+  {name:'Montevideo',adm:'Uruguay',lat:-34.9011,lon:-56.1645},
+  {name:'Santiago',adm:'Chile',lat:-33.4489,lon:-70.6693},
+  {name:'Madrid',adm:'España',lat:40.4168,lon:-3.7038},
+  {name:'Ciudad de México',adm:'México',lat:19.4326,lon:-99.1332},
+];
+const store={
+  get(k,d){ try{const v=localStorage.getItem('ocaso.'+k); return v?JSON.parse(v):d;}catch(e){return d;} },
+  set(k,v){ try{localStorage.setItem('ocaso.'+k,JSON.stringify(v));}catch(e){} }
+};
+const state={
+  place: store.get('place',{name:'Córdoba',adm:'Argentina',lat:-31.4201,lon:-64.1888,guess:true}),
+  weather:null,
+  dur: store.get('dur',10),
+  sound: store.get('sound','viento'),
+  maps:null, practice:null, running:false
+};
+
+const pad=n=>String(n).padStart(2,'0');
+const fmtHM=d=>d?`${pad(d.getHours())}:${pad(d.getMinutes())}`:'—';
+const DAYS=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const DAYS3=['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
+const MONTHS=['enero','febrero','marzo','abril','mayo','junio','julio','agosto',
+  'septiembre','octubre','noviembre','diciembre'];
+function durHTML(ms){
+  const m=Math.max(0,Math.round(ms/60000));
+  if(m<60) return `${m}<em>min</em>`;
+  const h=Math.floor(m/60), r=m%60;
+  return r? `${h}<em>h</em> ${r}<em>min</em>` : `${h}<em>h</em>`;
+}
+function humanDur(ms){
+  const m=Math.round(ms/60000);
+  if(m<60) return `${m} min`;
+  const h=Math.floor(m/60), r=m%60;
+  return r? `${h} h ${r} min` : `${h} h`;
+}
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+
+/* ---------- estrellas ---------- */
+function drawStars(){
+  const c=$('#stars'), dpr=Math.min(2,devicePixelRatio||1);
+  const w=innerWidth, h=innerHeight;
+  c.width=w*dpr; c.height=h*dpr; c.style.width=w+'px'; c.style.height=h+'px';
+  const x=c.getContext('2d'); x.scale(dpr,dpr); x.clearRect(0,0,w,h);
+  const rnd=mulberry(9182);
+  for(let i=0;i<190;i++){
+    const px=rnd()*w, py=rnd()*h*.8, r=rnd()*1.25+.25, a=.25+rnd()*.6;
+    x.globalAlpha=a; x.fillStyle=rnd()>.82?'#BFE6E4':'#FFF3DC';
+    x.beginPath(); x.arc(px,py,r,0,7); x.fill();
+  }
+  x.globalAlpha=1;
+}
+
+/* ---------- pintar todo ---------- */
+let moonCtx=null, moonSize=0, lastMoonKey='', fullMoonCache={key:null,at:null};
+
+function setupCanvas(el,cssSize){
+  const dpr=Math.min(2,devicePixelRatio||1);
+  const px=Math.round(cssSize*dpr);
+  if(el.width!==px){ el.width=px; el.height=px; }
+  return {ctx:el.getContext('2d'), size:px};
+}
+
+function paint(){
+  const now=new Date();
+  const {lat,lon}=state.place;
+  const sp=sunPosition(now,lat,lon);
+  const st=sunTimes(now,lat,lon);
+  const mp=moonPosition(now,lat,lon);
+  const mi=moonIllumination(now,lat,lon);
+  const mt=moonTimes(now,lat,lon);
+
+  /* --- reloj y fondo vivo --- */
+  $('#clock').textContent=fmtHM(now);
+  const sk=skyFor(sp.altitude);
+  const r=document.documentElement.style;
+  r.setProperty('--sky-1',sk.s[0]); r.setProperty('--sky-2',sk.s[1]); r.setProperty('--sky-3',sk.s[2]);
+  r.setProperty('--glow',sk.glow); r.setProperty('--glow-a',sk.a.toFixed(3));
+  r.setProperty('--acento',sk.ac); r.setProperty('--cool',sk.cool.toFixed(2));
+
+  // el resplandor se mueve con el azimut y la altura reales del sol
+  const gx=(sp.azimuth/360)*100, gy=50-Math.max(-14,Math.min(62,sp.altitude))*0.95;
+  $('#sunGlow').style.transform=`translate(${gx}vw,${gy}vh)`;
+  const mUp=mp.altitude>-2;
+  const mg=$('#moonGlow');
+  mg.style.transform=`translate(${(mp.azimuth/360)*100}vw,${50-Math.max(-14,Math.min(62,mp.altitude))*.95}vh)`;
+  mg.style.opacity=(mUp?Math.min(.85,mi.fraction*.9)*sk.cool:0).toFixed(2);
+  $('#stars').style.opacity=(sk.cool*.85).toFixed(2);
+
+  /* --- SOL --- */
+  const sunUp=sp.altitude>-0.833;
+  let kicker,val,lede;
+  if(sunUp && st.sunset && st.sunset>now){
+    kicker='Cae el sol en'; val=durHTML(st.sunset-now);
+    lede = (st.sunset-now)<45*60000
+      ? 'Es ahora o mañana. El momento que le da nombre a esto.'
+      : 'El fondo de la app va a ir cambiando solo hasta que pase.';
+  }else if(!sunUp && st.sunset && now>st.sunset){
+    const tm=sunTimes(new Date(now.getTime()+DAY),lat,lon);
+    kicker='El sol vuelve en'; val=tm.sunrise?durHTML(tm.sunrise-now):'—';
+    lede='Ya se fue. Esta es la parte oscura del día, y también sirve.';
+  }else{
+    kicker='Amanece en'; val=st.sunrise&&st.sunrise>now?durHTML(st.sunrise-now):'—';
+    lede='Todavía es de noche donde estás parado.';
+  }
+  $('#sunKicker').textContent=kicker;
+  $('#sunBig').innerHTML=val;
+  $('#sunLede').textContent=lede;
+
+  const dayLen=(st.sunset&&st.sunrise)?st.sunset-st.sunrise:0;
+  $('#sunRows').innerHTML=`
+    <div class="row"><span>Amanecer</span><b>${fmtHM(st.sunrise)}</b></div>
+    <div class="row"><span>Atardecer</span><b>${fmtHM(st.sunset)}</b></div>
+    <div class="row"><span>Hora dorada</span><b>${fmtHM(st.goldenStart)} – ${fmtHM(st.sunset)}</b></div>
+    <div class="row"><span>Altura del sol</span><b>${sp.altitude.toFixed(1)}°</b></div>
+    <div class="row"><span>Luz del día</span><b>${dayLen?humanDur(dayLen):'—'}</b></div>`;
+
+  drawArc(now,st,sp);
+
+  /* --- LUNA --- */
+  $('#moonName').textContent=moonPhaseName(mi.phase,mi.fraction);
+  $('#moonDate').textContent=`${cap(DAYS[now.getDay()])}, ${now.getDate()} de ${MONTHS[now.getMonth()]}, ${fmtHM(now)}`;
+  const dayKey=now.toDateString();
+  if(fullMoonCache.key!==dayKey) fullMoonCache={key:dayKey,at:nextMoonEvent(now,180)};
+  const full=fullMoonCache.at;
+  const dFull=full?Math.round((new Date(full.getFullYear(),full.getMonth(),full.getDate())
+              -new Date(now.getFullYear(),now.getMonth(),now.getDate()))/DAY):null;
+  $('#moonRows').innerHTML=`
+    <div class="row"><span>Luminosidad</span><b>${Math.round(mi.fraction*100)}%</b></div>
+    <div class="row"><span>Salida de la luna</span><b>${fmtHM(mt.rise)}</b></div>
+    <div class="row"><span>Puesta de la luna</span><b>${fmtHM(mt.set)}</b></div>
+    <div class="row"><span>Siguiente luna llena</span><b>${dFull!==null?(dFull===0?'hoy':dFull+' d'):'—'}</b></div>
+    <div class="row"><span>Distancia</span><b>${Math.round(mi.distance).toLocaleString('es-AR')} km</b></div>`;
+  buildStrip(now);
+  drawMoonIfReady(mi);
+
+  /* --- CIELO --- */
+  paintSky(sp,mi,mUp);
+
+  /* --- AHORA --- */
+  state.practice=choosePractice({now,sp,st,mi,mp,mUp,w:state.weather});
+  $('#nowTitle').textContent=state.practice.title;
+  $('#nowKicker').textContent=state.practice.why;
+}
+
+/* --- arco solar --- */
+function drawArc(now,st,sp){
+  const path=$('#arcPath'), len=path.getTotalLength();
+  const t=(st.sunrise&&st.sunset&&st.sunset>st.sunrise)
+    ? Math.max(0,Math.min(1,(now-st.sunrise)/(st.sunset-st.sunrise))) : (sp.altitude>0?.5:0);
+  const p=path.getPointAtLength(len*t);
+  $('#arcMark').setAttribute('transform',`translate(${p.x},${p.y})`);
+  $('#arcMark').style.opacity=(now>=st.sunrise&&now<=st.sunset)?1:.28;
+  // tramo recorrido
+  const N=60, done=[];
+  for(let i=0;i<=N*t;i++){const q=path.getPointAtLength(len*(i/N)); done.push(`${i?'L':'M'}${q.x} ${q.y}`);}
+  $('#arcDone').setAttribute('d',done.join(' ')||'M0 0');
+  // franja de hora dorada
+  if(st.goldenStart&&st.sunset){
+    const a=Math.max(0,Math.min(1,(st.goldenStart-st.sunrise)/(st.sunset-st.sunrise)));
+    const g=[];
+    for(let i=Math.floor(a*N);i<=N;i++){const q=path.getPointAtLength(len*(i/N)); g.push(`${g.length?'L':'M'}${q.x} ${q.y}`);}
+    $('#arcGolden').setAttribute('d',g.join(' '));
+  }
+  $('#arcL').textContent=fmtHM(st.sunrise);
+  $('#arcR').textContent=fmtHM(st.sunset);
+}
+
+/* --- regla de fases lunares --- */
+function buildStrip(now){
+  const ticks=$('#ticks'), days=$('#stripDays');
+  if(ticks.childElementCount===0){
+    for(let i=0;i<48;i++){ticks.appendChild(document.createElement('i'));}
+  }
+  const start=new Date(now); start.setHours(0,0,0,0);
+  start.setTime(start.getTime()-1.5*DAY);
+  const span=4*DAY;
+  const kids=ticks.children;
+  let html='';
+  for(let i=0;i<48;i++){
+    const t=start.getTime()+(i/48)*span, d=new Date(t);
+    const isDay=d.getHours()<2 && (i===0 || new Date(start.getTime()+((i-1)/48)*span).getDate()!==d.getDate());
+    kids[i].className=isDay?'day':'';
+    if(isDay){
+      const isNow=d.toDateString()===now.toDateString();
+      html+=`<b class="${isNow?'now':''}" style="left:${(i/48)*100}%">${isNow?'HOY':DAYS3[d.getDay()]}</b>`;
+    }
+  }
+  days.innerHTML=html;
+  $('#stripMark').style.left=((now-start)/span*100).toFixed(2)+'%';
+}
+
+/* --- render de la luna (cuando los mapas están listos) --- */
+function drawMoonIfReady(mi){
+  const el=$('#moonCanvas');
+  const css=el.clientWidth||190;
+  const {ctx,size}=setupCanvas(el,css);
+  moonCtx=ctx; moonSize=size;
+  if(!state.maps) return;
+  // hemisferio sur: la creciente se ilumina por la izquierda
+  const south=state.place.lat<0;
+  const dirX=(mi.waxing?(south?-1:1):(south?1:-1));
+  const key=[Math.round(mi.phaseAngle*400),dirX,size].join('|');
+  if(key===lastMoonKey) return;
+  lastMoonKey=key;
+  renderMoon(ctx,state.maps,{
+    size, phaseAngle:mi.phaseAngle, lightDir:[dirX,-0.06],
+    libLon:4.2, libLat:-3.1, tilt:south?-0.06:0.05
+  });
+}
+
+/* --- widget de cielo --- */
+function paintSky(sp,mi,mUp){
+  const w=state.weather;
+  const icon=$('#skyIcon');
+  let cloud=null,wind=null,uv=null,temp=null,rain=null;
+  if(w){ cloud=w.cloud; wind=w.wind; uv=w.uv; temp=w.temp; rain=w.rain; }
+
+  const stroke=v=>`stroke="${v}" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"`;
+  let svg;
+  if(cloud===null){
+    svg=`<svg viewBox="0 0 48 48" ${stroke('var(--humo)')}><circle cx="24" cy="24" r="9"/>
+      <path d="M24 6v4M24 38v4M6 24h4M38 24h4"/></svg>`;
+  }else if(rain>0.05){
+    svg=`<svg viewBox="0 0 48 48" ${stroke('var(--frio)')}>
+      <path d="M14 28h20a7 7 0 0 0 .6-14A10 10 0 0 0 15 12a7.4 7.4 0 0 0-1 16z" fill="rgba(92,124,138,.2)"/>
+      <path d="M17 34l-2 6M25 34l-2 6M33 34l-2 6"/></svg>`;
+  }else if(cloud>65){
+    svg=`<svg viewBox="0 0 48 48" ${stroke('var(--arena)')}>
+      <path d="M14 32h20a7.5 7.5 0 0 0 .6-15A10.6 10.6 0 0 0 15 15a7.9 7.9 0 0 0-1 17z" fill="rgba(216,196,168,.16)"/></svg>`;
+  }else if(cloud>25){
+    svg=`<svg viewBox="0 0 48 48" ${stroke('var(--ocre)')}>
+      <circle cx="18" cy="17" r="6.5" fill="rgba(242,179,46,.28)"/>
+      <path d="M18 5.5v3M6.5 17h3M9.6 8.6l2.1 2.1M26.4 8.6l-2.1 2.1"/>
+      <path d="M18 34h16a6.2 6.2 0 0 0 .5-12.4A8.7 8.7 0 0 0 19 20a6.5 6.5 0 0 0-1 14z" fill="rgba(216,196,168,.14)"/></svg>`;
+  }else if(sp.altitude<-2){
+    svg=`<svg viewBox="0 0 48 48" ${stroke('var(--turquesa)')}>
+      <path d="M40 29A17 17 0 0 1 19 8 17.5 17.5 0 1 0 40 29z" fill="rgba(63,179,166,.2)"/></svg>`;
+  }else{
+    svg=`<svg viewBox="0 0 48 48" ${stroke('var(--mostaza)')}>
+      <circle cx="24" cy="24" r="8.5" fill="rgba(242,179,46,.3)"/>
+      <path d="M24 4v5M24 39v5M4 24h5M39 24h5M10 10l3.5 3.5M34.5 34.5 38 38M38 10l-3.5 3.5M13.5 34.5 10 38"/></svg>`;
+  }
+  icon.innerHTML=svg;
+
+  if(cloud===null){
+    $('#skyState').textContent='Sin datos del cielo';
+    $('#skyDecision').innerHTML='No hay conexión al clima. OCASO sigue funcionando: '+
+      'el sol y la luna se calculan acá, sin red.';
+    $('#skyRows').innerHTML='';
+    return;
+  }
+  const cielo = rain>0.05?'Lloviendo': cloud>80?'Cubierto': cloud>50?'Nublado':
+                cloud>20?'Algo de nubes':'Despejado';
+  const viento = wind<6?'sin viento': wind<18?'viento leve': wind<32?'ventoso':'viento fuerte';
+  const uvTxt  = uv==null?'': uv<3?'UV bajo': uv<6?'UV moderado': uv<8?'UV alto':'UV muy alto';
+  $('#skyState').textContent=[cielo,viento,uvTxt].filter(Boolean).join(', ');
+
+  let dec;
+  if(rain>0.05) dec='Está lloviendo: <b>práctica de sonido</b>. La lluvia es el temporizador.';
+  else if(cloud>65) dec='Cielo cubierto: hoy no hay luz que mirar → <b>práctica de sonido</b>.';
+  else if(uv!=null&&uv>=6&&sp.altitude>15) dec='Sol fuerte: <b>práctica a la sombra</b>, con los ojos cerrados.';
+  else if(sp.altitude<-2) dec= mUp&&mi.fraction>.5
+      ? 'Hay luna arriba: <b>práctica de luz fría</b>, la única del sistema.'
+      : 'Sin luna a la vista: <b>práctica de oscuridad</b>.';
+  else if(wind>=18) dec='Hay viento: <b>práctica de piel</b>, dejate tocar por el aire.';
+  else dec='Cielo abierto: <b>práctica de luz</b>, mirá hacia el horizonte.';
+  $('#skyDecision').innerHTML=dec;
+  $('#skyRows').innerHTML=`
+    <div class="row"><span>Temperatura</span><b>${temp!=null?Math.round(temp)+'°':'—'}</b></div>
+    <div class="row"><span>Nubosidad</span><b>${cloud}%</b></div>
+    <div class="row"><span>Viento</span><b>${wind!=null?Math.round(wind)+' km/h':'—'}</b></div>`;
+}
+
+/* ============================================================
+   7 · MOTOR DE PRÁCTICA — hora + cielo + luna, sin menú
+   ============================================================ */
+function choosePractice(c){
+  const {now,sp,st,mi,mUp,w}=c;
+  const min=x=>x/60000;
+  const toSunset=st.sunset?min(st.sunset-now):null;
+  const toSunrise=st.sunrise?min(st.sunrise-now):null;
+  const cloud=w?w.cloud:null, rain=w?w.rain:0, wind=w?w.wind:null, uv=w?w.uv:null;
+
+  const P=(title,kicker,why,steps,dur,sound)=>({title,kicker,why,steps,dur,sound});
+
+  if(toSunset!==null&&toSunset<=45&&toSunset>0)
+    return P('Última luz','El momento que da nombre a todo',
+      `Cae el sol en ${Math.round(toSunset)} min. Es ahora o mañana.`,
+      ['Buscá el horizonte más abierto que tengas cerca — una ventana alcanza.',
+       'Mirá la línea donde el cielo cambia de color, sin buscar nada.',
+       'Cuando el sol toque el borde, cerrá los ojos y quedate con la imagen.'],
+      10,'viento');
+
+  if(toSunset!==null&&toSunset<=0&&toSunset>-40)
+    return P('La hora azul','Veinte minutos que no vuelven',
+      'El sol ya bajó pero el cielo todavía tiene luz.',
+      ['No prendas ninguna luz todavía.',
+       'Mirá cómo el color se va del cielo, minuto a minuto.',
+       'Respirá largo: cuatro tiempos para entrar, seis para salir.'],
+      10,'viento');
+
+  if(toSunrise!==null&&toSunrise<=40&&toSunrise>-25)
+    return P('Primera luz','Antes de que empiece el día',
+      'El sol está por salir donde estás parado.',
+      ['Sentate mirando al este, antes de tocar el teléfono otra vez.',
+       'Esperá el primer cambio de color sin hacer nada más.',
+       'Nombrá en voz baja una sola cosa que querés sostener hoy.'],
+      10,'tela');
+
+  if(rain>0.05)
+    return P('Sonido de lluvia','El cielo puso el temporizador',
+      'Está lloviendo: la práctica es de oído, no de vista.',
+      ['Cerrá los ojos y buscá el sonido más lejano que puedas oír.',
+       'Después el más cercano. Después el del medio.',
+       'Quedate en el del medio hasta que suene la campana.'],
+      10,'agua');
+
+  if(cloud!==null&&cloud>65&&sp.altitude>-2)
+    return P('Cielo cerrado','Sin luz que mirar',
+      'Cubierto: la app cambia a práctica de sonido, no de luz.',
+      ['Apoyá los pies enteros en el piso.',
+       'Escuchá tres capas de sonido: la lejana, la del cuarto, la de tu respiración.',
+       'Volvé a la última cada vez que te vayas.'],
+      10,'agua');
+
+  if(sp.altitude<-6&&mUp&&mi.fraction>0.55)
+    return P('Luz de luna','El único color frío del sistema',
+      `La luna está arriba, al ${Math.round(mi.fraction*100)}%.`,
+      ['Salí o asomate a una ventana y buscala de verdad.',
+       'Sostenela con la mirada mientras contás diez respiraciones.',
+       'Después cerrá los ojos: va a seguir ahí un rato.'],
+      15,'viento');
+
+  if(sp.altitude<-6)
+    return P('Oscuridad','Lo que queda cuando no hay nada que ver',
+      'Es de noche y no hay luna a la vista.',
+      ['Bajá todas las luces que puedas.',
+       'Sentate y dejá que los ojos se acostumbren, sin apurarlos.',
+       'Contá hacia atrás desde veinte, una respiración por número.'],
+      15,'fuego');
+
+  if(uv!=null&&uv>=6&&sp.altitude>15)
+    return P('Sombra','El sol pega fuerte',
+      `UV ${Math.round(uv)}: la práctica es a la sombra.`,
+      ['Buscá sombra real, no un cuarto cerrado.',
+       'Cerrá los ojos de frente al sol: vas a ver naranja, no negro.',
+       'Quedate en ese naranja.'],
+      5,'tela');
+
+  if(wind!=null&&wind>=18)
+    return P('Viento','Práctica de piel',
+      `${Math.round(wind)} km/h afuera. Se siente antes de verse.`,
+      ['Poné la cara y las manos donde te dé el aire.',
+       'Seguí una sola ráfaga de principio a fin.',
+       'Cuando termine, esperá la próxima sin buscarla.'],
+      5,'viento');
+
+  return P('Pausa de día','Cinco minutos, sin trámite',
+    'Media mañana o media tarde: nada especial pasa en el cielo. Igual sirve.',
+    ['Dejá el teléfono lejos, con esto andando.',
+     'Mirá el punto más lejano que se vea desde donde estás.',
+     'Quedate ahí hasta que suene.'],
+    5,'tela');
+}
+
+/* ============================================================
+   8 · TEMPORIZADOR Y PRÁCTICA
+   ============================================================ */
+let tick=null, t0=0, total=0, breathRAF=null;
+function openPractice(p){
+  state.running=true;
+  $('#pKicker').textContent=p.kicker;
+  $('#pTitle').textContent=p.title;
+  $('#pSteps').innerHTML=p.steps.map(s=>`<div>${s}</div>`).join('');
+  $('#practice').classList.add('on');
+  total=state.dur*60000; t0=Date.now();
+  if(state.sound!=='silencio') Sound.start(state.sound);
+  Sound.bell();
+  updateSoundBtn();
+  clearInterval(tick);
+  tick=setInterval(()=>{
+    const left=Math.max(0,total-(Date.now()-t0));
+    const s=Math.ceil(left/1000);
+    $('#pTime').textContent=`${pad(Math.floor(s/60))}:${pad(s%60)}`;
+    const off=(295.3*(1-left/total)).toFixed(1);
+    $('#ringFg').setAttribute('stroke-dashoffset',off);
+    $('#ringHalo').setAttribute('stroke-dashoffset',off);
+    if(left<=0){ endPractice(true); }
+  },200);
+  breathe();
+}
+function breathe(){
+  const el=$('#breath'), txt=$('#breathTxt');
+  const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const CYCLE=[[4000,'inhalá',1.16],[2000,'sostené',1.16],[6000,'soltá',0.86]];
+  const total=CYCLE.reduce((a,b)=>a+b[0],0);
+  const loop=()=>{
+    if(!state.running) return;
+    const t=(Date.now()-t0)%total;
+    let acc=0, phase=CYCLE[0], prev=0.86;
+    for(let i=0;i<CYCLE.length;i++){
+      if(t<acc+CYCLE[i][0]){ phase=CYCLE[i]; prev=i?CYCLE[i-1][2]:0.86; break; }
+      acc+=CYCLE[i][0];
+    }
+    const f=(t-acc)/phase[0];
+    const scale=lerp(prev,phase[2],f<0?0:f>1?1:(f*f*(3-2*f)));
+    if(!still) el.style.transform=`scale(${scale.toFixed(3)})`;
+    if(txt.textContent!==phase[1]) txt.textContent=phase[1];
+    breathRAF=requestAnimationFrame(loop);
+  };
+  loop();
+}
+function endPractice(done){
+  state.running=false;
+  clearInterval(tick); cancelAnimationFrame(breathRAF);
+  if(done) Sound.bell();
+  Sound.stop();
+  $('#practice').classList.remove('on');
+}
+function updateSoundBtn(){
+  $('#pSound').textContent=(state.sound==='silencio'?'🔇 en silencio':'🔈 '+state.sound);
+}
+
+/* ============================================================
+   9 · CLIMA (Open-Meteo) Y UBICACIÓN
+   ============================================================ */
+async function fetchWeather(){
+  const {lat,lon}=state.place;
+  const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}`+
+    `&current=temperature_2m,cloud_cover,wind_speed_10m,precipitation,uv_index&timezone=auto`;
+  try{
+    const ctl=new AbortController();
+    const to=setTimeout(()=>ctl.abort(),7000);
+    const res=await fetch(url,{signal:ctl.signal});
+    clearTimeout(to);
+    if(!res.ok) throw new Error('http '+res.status);
+    const j=await res.json();
+    const c=j.current||{};
+    state.weather={temp:c.temperature_2m, cloud:Math.round(c.cloud_cover??0),
+      wind:c.wind_speed_10m, rain:c.precipitation??0, uv:c.uv_index};
+  }catch(e){
+    state.weather=null;
+  }
+  paint();
+}
+function setPlace(p){
+  state.place={...p}; store.set('place',state.place);
+  $('#locName').textContent=p.name;
+  lastMoonKey='';
+  paint(); fetchWeather();
+}
+function askGps(){
+  if(!navigator.geolocation) return;
+  $('#locName').textContent='buscando…';
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const lat=pos.coords.latitude, lon=pos.coords.longitude;
+    let name='Tu ubicación';
+    try{
+      const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?count=1&language=es&latitude=${lat}&longitude=${lon}`);
+      if(r.ok){ const j=await r.json(); if(j.results&&j.results[0]) name=j.results[0].name; }
+    }catch(e){}
+    setPlace({name,adm:'',lat,lon});
+    $('#sheet').classList.remove('on');
+  },()=>{
+    $('#locName').textContent=state.place.name;
+  },{timeout:9000,maximumAge:600000});
+}
+async function searchCity(q){
+  if(!q||q.length<2){ renderCityList(CITIES); return; }
+  try{
+    const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=8&language=es`);
+    if(!r.ok) throw 0;
+    const j=await r.json();
+    renderCityList((j.results||[]).map(x=>({name:x.name,adm:[x.admin1,x.country].filter(Boolean).join(', '),
+      lat:x.latitude,lon:x.longitude})));
+  }catch(e){
+    renderCityList(CITIES.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())));
+  }
+}
+function renderCityList(list){
+  const box=$('#cityResults');
+  box.innerHTML=list.length?'':'<div class="note">Sin resultados. Probá con otro nombre.</div>';
+  list.forEach(c=>{
+    const b=document.createElement('button');
+    b.innerHTML=`${c.name}<small>${c.adm||''}</small>`;
+    b.onclick=()=>{ setPlace(c); $('#sheet').classList.remove('on'); };
+    box.appendChild(b);
+  });
+}
+
+/* ============================================================
+   10 · ARRANQUE
+   ============================================================ */
+function buildOptions(){
+  const durs=$('#durs');
+  [5,10,15,20].forEach(m=>{
+    const b=document.createElement('button');
+    b.className='opt'; b.textContent=m+' min';
+    b.setAttribute('aria-pressed',String(m===state.dur));
+    b.onclick=()=>{ state.dur=m; store.set('dur',m);
+      [...durs.children].forEach(c=>c.setAttribute('aria-pressed','false'));
+      b.setAttribute('aria-pressed','true'); };
+    durs.appendChild(b);
+  });
+  const sounds=$('#sounds');
+  [['viento','⌇'],['agua','≈'],['fuego','▲'],['tela','▤'],['silencio','—']].forEach(([s,em])=>{
+    const b=document.createElement('button');
+    b.className='opt'; b.innerHTML=`<span class="em">${em}</span>${s}`;
+    b.setAttribute('aria-pressed',String(s===state.sound));
+    b.onclick=()=>{ state.sound=s; store.set('sound',s);
+      [...sounds.children].forEach(c=>c.setAttribute('aria-pressed','false'));
+      b.setAttribute('aria-pressed','true');
+      updateSoundBtn();
+      if(state.running){ if(s==='silencio') Sound.stop(); else Sound.start(s); } };
+    sounds.appendChild(b);
+  });
+}
+
+function boot(){
+  buildOptions();
+  $('#locName').textContent=state.place.name;
+  drawStars();
+  paint();
+
+  // los mapas de la luna tardan ~300 ms: se generan sin bloquear la primera pintura
+  const build=()=>{ state.maps=buildMoonMaps(); lastMoonKey=''; paint(); };
+  ('requestIdleCallback' in window)?requestIdleCallback(build,{timeout:1200}):setTimeout(build,120);
+
+  // el sol respira
+  granA=makeGranules(31,256); granB=makeGranules(77,256);
+  const sunEl=$('#sunCanvas');
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let vis=true;
+  document.addEventListener('visibilitychange',()=>{vis=!document.hidden;});
+  const loopSun=(t)=>{
+    if(vis){
+      const css=sunEl.clientWidth||140;
+      const {ctx,size}=setupCanvas(sunEl,css);
+      const el=sunPosition(new Date(),state.place.lat,state.place.lon).altitude;
+      drawSun(ctx,size,reduce?0:t,el);
+    }
+    requestAnimationFrame(loopSun);
+  };
+  requestAnimationFrame(loopSun);
+
+  fetchWeather();
+  setInterval(paint,20000);
+  setInterval(fetchWeather,15*60000);
+
+  let rt=null;
+  addEventListener('resize',()=>{clearTimeout(rt); rt=setTimeout(()=>{drawStars(); lastMoonKey=''; paint();},220);});
+
+  // acciones
+  $('#btnNow').onclick=()=>{
+    const p=state.practice||choosePractice({now:new Date(),
+      sp:sunPosition(new Date(),state.place.lat,state.place.lon),
+      st:sunTimes(new Date(),state.place.lat,state.place.lon),
+      mi:moonIllumination(new Date(),state.place.lat,state.place.lon),mUp:false,w:state.weather});
+    state.dur=p.dur; store.set('dur',p.dur);
+    [...$('#durs').children].forEach(c=>
+      c.setAttribute('aria-pressed',String(c.textContent===p.dur+' min')));
+    if(p.sound!==state.sound){
+      state.sound=p.sound; store.set('sound',p.sound);
+      [...$('#sounds').children].forEach(c=>
+        c.setAttribute('aria-pressed',String(c.textContent.trim().endsWith(p.sound))));
+    }
+    openPractice(p);
+  };
+  $('#btnStart').onclick=()=>openPractice(state.practice);
+  $('#pEnd').onclick=()=>endPractice(false);
+  $('#pSound').onclick=()=>{
+    if(Sound.on){ Sound.stop(); $('#pSound').textContent='🔇 sin sonido'; }
+    else if(state.sound!=='silencio'){ Sound.start(state.sound); updateSoundBtn(); }
+  };
+  addEventListener('keydown',e=>{ if(e.key==='Escape'){ endPractice(false); $('#sheet').classList.remove('on'); }});
+
+  $('#locChip').onclick=()=>{ $('#sheet').classList.add('on'); renderCityList(CITIES); $('#citySearch').focus(); };
+  $('#sheetClose').onclick=()=>$('#sheet').classList.remove('on');
+  $('#useGps').onclick=askGps;
+  let sd=null;
+  $('#citySearch').oninput=e=>{clearTimeout(sd); const v=e.target.value; sd=setTimeout(()=>searchCity(v),300);};
+  $('#sheet').onclick=e=>{ if(e.target.id==='sheet') $('#sheet').classList.remove('on'); };
+
+  // si nunca eligió lugar, pedir el real una vez
+  if(state.place.guess && navigator.geolocation && navigator.permissions){
+    navigator.permissions.query({name:'geolocation'}).then(p=>{
+      if(p.state==='granted') askGps();
+    }).catch(()=>{});
+  }
+  window.__ready=true;
+}
+boot();
+</script>
+</body>
+</html>
