@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#04060c">
+<title>Luna Real — visor lunar 3D</title>
+<meta name="description" content="Visor lunar 3D con la fase, la libracion y la iluminacion calculadas para el instante y el lugar que elijas.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌙</text></svg>">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="stage">
+  <div id="canvas-host"></div>
+  <div id="labels" aria-hidden="true"></div>
+  <div id="hint" class="hint">Arrastrá para girar · rueda para acercar · tocá un cráter</div>
+
+  <header id="top">
+    <div class="brand">
+      <span class="brand-moon">🌙</span>
+      <span class="brand-text">
+        <strong>Luna Real</strong>
+        <small id="brand-sub">fase y relieve calculados para tu lugar y tu hora</small>
+      </span>
+    </div>
+    <nav class="tools">
+      <button id="btn-view"    class="tool" title="Cambiar orientación de la vista"><span class="ico">🧭</span><span class="lbl">Vista</span></button>
+      <button id="btn-labels"  class="tool" title="Mostrar nombres de mares y cráteres"><span class="ico">🏷️</span><span class="lbl">Etiquetas</span></button>
+      <button id="btn-compare" class="tool" title="Comparar dos fechas"><span class="ico">⧉</span><span class="lbl">Comparar</span></button>
+      <button id="btn-sound"   class="tool" title="Sonido ambiente"><span class="ico">🔈</span><span class="lbl">Sonido</span></button>
+      <button id="btn-info"    class="tool" title="Acerca de"><span class="ico">?</span></button>
+      <button id="btn-panel"   class="tool only-mobile" title="Datos"><span class="ico">📊</span></button>
+    </nav>
+  </header>
+
+  <aside id="panel">
+    <div class="panel-head">
+      <div class="phase-name" id="phase-name">—</div>
+      <div class="phase-sub"><span id="phase-when">—</span></div>
+      <div class="illum-row">
+        <div class="illum-big"><span id="illum">—</span><i>%</i></div>
+        <div class="illum-meta">
+          <div>iluminada</div>
+          <div class="bar"><span id="illum-bar"></span></div>
+          <div id="age">—</div>
+        </div>
+      </div>
+      <div id="badges" class="badges"></div>
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <section class="block">
+      <h3>En el cielo <small id="place-name">—</small></h3>
+      <div class="stats compact" id="sky"></div>
+    </section>
+
+    <section class="block">
+      <h3>Próximas fases</h3>
+      <ul class="list" id="quarters"></ul>
+    </section>
+
+    <section class="block">
+      <h3>Próximos eclipses</h3>
+      <ul class="list" id="eclipses"></ul>
+    </section>
+
+    <section class="block">
+      <h3>Ubicación</h3>
+      <div class="loc-row">
+        <select id="place-select"></select>
+        <button id="btn-geo" class="mini" title="Usar mi ubicación">Usar mi ubicación</button>
+      </div>
+      <div class="loc-manual">
+        <label>lat <input id="lat" type="number" step="0.01" min="-90" max="90"></label>
+        <label>lon <input id="lon" type="number" step="0.01" min="-180" max="180"></label>
+        <button id="btn-loc-apply" class="mini">Aplicar</button>
+      </div>
+      <p class="foot" id="hemi-note"></p>
+    </section>
+
+    <p class="credits">
+      Órbita y fases: <b>astronomy-engine</b> · render: <b>three.js</b> ·
+      mapas lunares derivados de mosaicos Clementine/USGS (NASA).
+      Todo se calcula en tu navegador, sin conexión.
+    </p>
+  </aside>
+
+  <div id="feature-card" class="card hidden">
+    <button class="card-close" id="feature-close">×</button>
+    <div class="card-kind" id="feature-kind"></div>
+    <h4 id="feature-name"></h4>
+    <div class="card-coords" id="feature-coords"></div>
+    <p id="feature-text"></p>
+  </div>
+
+  <div id="tooltip" class="tooltip hidden"></div>
+
+  <footer id="timeline">
+    <div id="compare-chips" class="chips hidden">
+      <button class="chip active" data-slot="a">A · <span id="chip-a">—</span></button>
+      <button class="chip" data-slot="b">B · <span id="chip-b">—</span></button>
+      <span class="chip-hint">elegí un extremo y movete por la línea de tiempo</span>
+    </div>
+    <div id="days" class="days"></div>
+    <div class="scrub">
+      <button id="btn-today" class="mini strong">Hoy</button>
+      <button id="btn-prev" class="mini icon" title="Un día menos">‹</button>
+      <input id="scrub" type="range" min="0" max="1000" value="0" step="1" aria-label="Línea de tiempo">
+      <button id="btn-next" class="mini icon" title="Un día más">›</button>
+      <button id="btn-play" class="mini icon" title="Animar el paso del tiempo">▶</button>
+      <div id="stamp" class="stamp">—</div>
+    </div>
+  </footer>
+
+  <div id="info" class="modal hidden">
+    <div class="modal-box">
+      <button class="card-close" id="info-close">×</button>
+      <h2>🌙 Luna Real</h2>
+      <p>La esfera no es una animación: es la Luna real iluminada por el Sol real.
+         Para el instante que elegís se calculan la posición del Sol y de la Luna,
+         la <b>libración</b> (ese leve cabeceo que nos deja espiar un poco más allá del borde)
+         y el ángulo del eje lunar. Con eso se orienta la textura y se ilumina la
+         esfera, así que el terminador —la línea entre luz y sombra— cae donde
+         corresponde, con los cráteres proyectando sombra real.</p>
+      <ul>
+        <li><b>Arrastrar</b>: girás alrededor de la Luna y podés ver la cara oculta.</li>
+        <li><b>Rueda o pellizco</b>: acercás hasta el detalle de los cráteres.</li>
+        <li><b>Clic</b>: identifica mares, cráteres y sitios de alunizaje.</li>
+        <li><b>Vista</b>: alterna entre cómo se ve desde tu ubicación (cenit arriba,
+            por eso en el hemisferio sur la Luna se ve "al revés") y la orientación
+            geocéntrica con el norte celeste arriba.</li>
+        <li><b>Comparar</b>: dos fechas lado a lado, con la misma cámara.</li>
+      </ul>
+      <p class="foot">El brillo usa una BRDF de Lommel-Seeliger con pico de oposición:
+         por eso la luna llena se ve como un disco plano y parejo, sin el degradé
+         de una bola de billar, igual que en el cielo. La cara no iluminada recibe
+         un poco de <b>luz cenicienta</b>, el reflejo de la Tierra.</p>
+      <p class="foot">Cálculo astronómico: <a href="https://github.com/cosinekitty/astronomy" target="_blank" rel="noopener">astronomy-engine</a> (MIT).
+         Render: <a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> (MIT).
+         Mapa de albedo y de relieve: texturas lunares de three.js y threex.planets,
+         derivadas de mosaicos Clementine/USGS de la NASA.</p>
+    </div>
+  </div>
+
+  <div id="fallback" class="modal hidden">
+    <div class="modal-box">
+      <h2>No se pudo iniciar WebGL</h2>
+      <p>Este visor necesita WebGL para dibujar la esfera lunar. Probá con otro
+         navegador o activá la aceleración por hardware. Los datos de fase y
+         horarios igual se calculan y se muestran en el panel.</p>
+    </div>
+  </div>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/astronomy.browser.min.js"></script>
+<script src="js/textures.js"></script>
+<script src="js/features.js"></script>
+<script src="js/astro.js"></script>
+<script src="js/disc.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

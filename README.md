@@ -34,3 +34,10 @@ dispositivo. Se puede reiniciar desde el enlace al pie de la página.
 
 Conectás el repo a Vercel y listo — es HTML estático, no requiere ningún
 build step.
+
+## Otras páginas del repo
+
+- [`luna/`](luna/) — **🌙 Luna Real**, un visor lunar 3D: la Luna con su textura
+  real, iluminada por el Sol real para el instante y el lugar que elijas, con
+  línea de tiempo de fases, eclipses y cráteres identificables. También es
+  estático y sin dependencias; queda publicado en `/luna/`.
