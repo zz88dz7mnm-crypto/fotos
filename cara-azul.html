@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carita Azul</title>
+<style>
+  :root{
+    --bg1:#031024;
+    --bg2:#0a2a5c;
+    --face1:#1e6fe0;
+    --face2:#0c3f9e;
+    --face-edge:#082b73;
+    --white:#f5f9ff;
+    --pupil:#04122e;
+    --text:#eaf2ff;
+    --muted:#9fb8e8;
+    --accent:#4fc3ff;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;
+    height:100%;
+    background:radial-gradient(ellipse at 50% 20%, var(--bg2), var(--bg1) 70%);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    overflow-x:hidden;
+  }
+  body{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    min-height:100vh;
+    padding:24px 16px 60px;
+  }
+  header{
+    text-align:center;
+    max-width:520px;
+    margin-bottom:8px;
+  }
+  header h1{
+    margin:0 0 6px;
+    font-size:1.6rem;
+    letter-spacing:-0.01em;
+  }
+  header p{
+    margin:0;
+    color:var(--muted);
+    font-size:0.92rem;
+    line-height:1.5;
+  }
+
+  .stage{
+    position:relative;
+    width:min(420px, 92vw);
+    aspect-ratio:1/1;
+    margin-top:18px;
+    filter:drop-shadow(0 20px 40px rgba(0,30,90,0.55));
+  }
+  .stage svg{
+    width:100%;
+    height:100%;
+    display:block;
+    cursor:pointer;
+  }
+
+  /* eyes blink via scaleY on the whole eye group */
+  .eye{
+    transform-box: fill-box;
+    transform-origin: center;
+    transition: transform 0.09s ease-in-out;
+  }
+  .eye.blink{
+    transform: scaleY(0.06);
+  }
+
+  .pupil{
+    transition: cx 0.08s linear, cy 0.08s linear;
+  }
+
+  .eyebrow{
+    transition: transform 0.35s cubic-bezier(.34,1.56,.64,1), d 0.35s ease;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .mouth{
+    transition: d 0.35s ease;
+  }
+
+  .cheek{
+    opacity:0;
+    transition: opacity 0.35s ease;
+  }
+  .cheek.show{ opacity:0.55; }
+
+  .tear{
+    opacity:0;
+    transition: opacity 0.35s ease, transform 0.6s ease;
+  }
+  .tear.show{
+    opacity:0.9;
+  }
+
+  .controls{
+    margin-top:22px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+    max-width:460px;
+    width:100%;
+  }
+
+  .row{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+
+  button{
+    background:linear-gradient(180deg,#1f7cff,#0e57cf);
+    color:#fff;
+    border:1px solid #1a4fb0;
+    padding:10px 18px;
+    border-radius:999px;
+    font-size:0.9rem;
+    font-weight:600;
+    cursor:pointer;
+    box-shadow:0 4px 14px rgba(15,80,210,0.45);
+    transition:transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+  }
+  button:hover{ transform:translateY(-1px); box-shadow:0 6px 18px rgba(15,80,210,0.6); }
+  button:active{ transform:translateY(0px) scale(0.97); }
+  button.secondary{
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.18);
+    box-shadow:none;
+  }
+  button:disabled{ opacity:0.5; cursor:default; transform:none; }
+
+  .status{
+    font-size:0.85rem;
+    color:var(--muted);
+    text-align:center;
+    min-height:1.3em;
+  }
+  .status b{ color:var(--accent); }
+
+  video{
+    display:none;
+  }
+
+  .camera-wrap{
+    position:relative;
+    width:120px;
+    height:90px;
+    border-radius:12px;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,0.18);
+    display:none;
+  }
+  .camera-wrap.on{ display:block; }
+  .camera-wrap video{
+    display:block;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    transform:scaleX(-1);
+  }
+
+  .hint{
+    font-size:0.78rem;
+    color:var(--muted);
+    opacity:0.8;
+    text-align:center;
+    max-width:420px;
+  }
+
+  footer{
+    margin-top:30px;
+    font-size:0.75rem;
+    color:var(--muted);
+    opacity:0.6;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔵 Carita Azul</h1>
+  <p>
+    Movéle el mouse para que te siga con los ojos, hacele click para saludar,
+    o activá la cámara para que copie tu cara en tiempo real.
+  </p>
+</header>
+
+<div class="stage" id="stage">
+  <svg viewBox="0 0 400 400">
+    <defs>
+      <radialGradient id="faceGrad" cx="38%" cy="32%" r="75%">
+        <stop offset="0%" stop-color="#3a8bff"/>
+        <stop offset="55%" stop-color="var(--face1)"/>
+        <stop offset="100%" stop-color="var(--face2)"/>
+      </radialGradient>
+      <radialGradient id="cheekGrad" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#ff8fb0"/>
+        <stop offset="100%" stop-color="#ff8fb0" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+
+    <!-- face -->
+    <circle cx="200" cy="210" r="170" fill="url(#faceGrad)" stroke="var(--face-edge)" stroke-width="4"/>
+
+    <!-- cheeks -->
+    <ellipse class="cheek" id="cheekL" cx="100" cy="240" rx="26" ry="18" fill="url(#cheekGrad)"/>
+    <ellipse class="cheek" id="cheekR" cx="300" cy="240" rx="26" ry="18" fill="url(#cheekGrad)"/>
+
+    <!-- eyebrows -->
+    <path class="eyebrow" id="browL" d="M 100 128 Q 138 108 176 126" fill="none" stroke="#062559" stroke-width="10" stroke-linecap="round"/>
+    <path class="eyebrow" id="browR" d="M 224 126 Q 262 108 300 128" fill="none" stroke="#062559" stroke-width="10" stroke-linecap="round"/>
+
+    <!-- eyes -->
+    <g class="eye" id="eyeL">
+      <ellipse cx="138" cy="182" rx="36" ry="42" fill="var(--white)"/>
+      <circle class="pupil" id="pupilL" cx="138" cy="182" r="15" fill="var(--pupil)"/>
+      <circle cx="132" cy="172" r="4.5" fill="#fff" opacity="0.9"/>
+    </g>
+    <g class="eye" id="eyeR">
+      <ellipse cx="262" cy="182" rx="36" ry="42" fill="var(--white)"/>
+      <circle class="pupil" id="pupilR" cx="262" cy="182" r="15" fill="var(--pupil)"/>
+      <circle cx="256" cy="172" r="4.5" fill="#fff" opacity="0.9"/>
+    </g>
+
+    <!-- tears (sad) -->
+    <ellipse class="tear" id="tearL" cx="126" cy="232" rx="6" ry="11" fill="#bfe6ff"/>
+    <ellipse class="tear" id="tearR" cx="274" cy="232" rx="6" ry="11" fill="#bfe6ff"/>
+
+    <!-- mouth -->
+    <path class="mouth" id="mouth" d="M 150 280 Q 200 300 250 280" fill="none" stroke="#062559" stroke-width="9" stroke-linecap="round"/>
+  </svg>
+</div>
+
+<div class="controls">
+  <div class="status" id="status">Estado: <b>neutral</b> · pestañeando solita 👀</div>
+
+  <div class="row">
+    <button id="camBtn">🎥 Activar cámara</button>
+    <button class="secondary" id="demoBtn">🎲 Reacción al azar</button>
+  </div>
+
+  <div class="camera-wrap" id="camWrap">
+    <video id="video" autoplay muted playsinline></video>
+  </div>
+
+  <p class="hint" id="hint">
+    Tip: con la cámara activada, sonreí, abrí la boca, hacé cara de sorpresa,
+    enojo o tristeza — la carita azul te va a copiar en tiempo real.
+  </p>
+</div>
+
+<footer>hecha con SVG + JS · sin frameworks</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.15/dist/face-api.min.js"></script>
+<script>
+(() => {
+  const stage   = document.getElementById('stage');
+  const eyeL    = document.getElementById('eyeL');
+  const eyeR    = document.getElementById('eyeR');
+  const pupilL  = document.getElementById('pupilL');
+  const pupilR  = document.getElementById('pupilR');
+  const browL   = document.getElementById('browL');
+  const browR   = document.getElementById('browR');
+  const mouth   = document.getElementById('mouth');
+  const cheekL  = document.getElementById('cheekL');
+  const cheekR  = document.getElementById('cheekR');
+  const tearL   = document.getElementById('tearL');
+  const tearR   = document.getElementById('tearR');
+  const statusEl= document.getElementById('status');
+  const camBtn  = document.getElementById('camBtn');
+  const demoBtn = document.getElementById('demoBtn');
+  const camWrap = document.getElementById('camWrap');
+  const video   = document.getElementById('video');
+  const hint    = document.getElementById('hint');
+
+  /* ---------- expresiones ---------- */
+  // todas las bocas comparten estructura "M x y Q x y x y" para que el
+  // navegador pueda interpolar el atributo d con transición suave.
+  const EXPR = {
+    neutral: {
+      mouth: 'M 150 280 Q 200 296 250 280',
+      browL: 'M 100 128 Q 138 108 176 126',
+      browR: 'M 224 126 Q 262 108 300 128',
+      cheeks: false, tears: false, squint: false
+    },
+    happy: {
+      mouth: 'M 138 272 Q 200 336 262 272',
+      browL: 'M 100 122 Q 138 104 176 120',
+      browR: 'M 224 120 Q 262 104 300 122',
+      cheeks: true, tears: false, squint: true
+    },
+    surprised: {
+      mouth: 'M 178 278 Q 200 322 222 278',
+      browL: 'M 98 108 Q 138 88 178 108',
+      browR: 'M 222 108 Q 262 88 302 108',
+      cheeks: false, tears: false, squint: false, wide: true
+    },
+    angry: {
+      mouth: 'M 150 292 Q 200 268 250 292',
+      browL: 'M 104 118 Q 140 138 180 128',
+      browR: 'M 220 128 Q 260 138 296 118',
+      cheeks: false, tears: false, squint: false
+    },
+    sad: {
+      mouth: 'M 150 296 Q 200 262 250 296',
+      browL: 'M 100 116 Q 140 130 180 132',
+      browR: 'M 220 132 Q 260 130 300 116',
+      cheeks: false, tears: true, squint: false
+    },
+    disgusted: {
+      mouth: 'M 152 284 Q 200 270 248 288',
+      browL: 'M 100 126 Q 140 116 180 130',
+      browR: 'M 220 130 Q 260 116 300 126',
+      cheeks: false, tears: false, squint: false
+    },
+    fearful: {
+      mouth: 'M 172 280 Q 200 302 228 280',
+      browL: 'M 100 112 Q 138 96 176 116',
+      browR: 'M 224 116 Q 262 96 300 112',
+      cheeks: false, tears: false, squint: false, wide: true
+    }
+  };
+
+  let currentExpr = 'neutral';
+  function applyExpression(name, opts = {}) {
+    const e = EXPR[name] || EXPR.neutral;
+    currentExpr = name;
+    mouth.setAttribute('d', e.mouth);
+    browL.setAttribute('d', e.browL);
+    browR.setAttribute('d', e.browR);
+    cheekL.classList.toggle('show', !!e.cheeks);
+    cheekR.classList.toggle('show', !!e.cheeks);
+    tearL.classList.toggle('show', !!e.tears);
+    tearR.classList.toggle('show', !!e.tears);
+    eyeL.style.transform = e.squint ? 'scaleY(0.55)' : (e.wide ? 'scaleY(1.12)' : '');
+    eyeR.style.transform = e.squint ? 'scaleY(0.55)' : (e.wide ? 'scaleY(1.12)' : '');
+    if (!opts.silent) {
+      const labels = {
+        neutral:'neutral 😐', happy:'feliz 😄', surprised:'sorprendida 😮',
+        angry:'enojada 😠', sad:'triste 😢', disgusted:'asco 😖', fearful:'miedo 😱'
+      };
+      statusEl.innerHTML = `Estado: <b>${labels[name] || name}</b>`;
+    }
+  }
+
+  /* ---------- ojos siguen el mouse ---------- */
+  let targetX = 0.5, targetY = 0.5; // 0..1 dentro del stage
+  let curX = 0.5, curY = 0.5;
+
+  function moveEyesTo(nx, ny) {
+    // nx, ny: -1..1 relativo al centro del stage
+    const maxOffX = 12, maxOffY = 14;
+    const ox = nx * maxOffX, oy = ny * maxOffY;
+    pupilL.setAttribute('cx', 138 + ox);
+    pupilL.setAttribute('cy', 182 + oy);
+    pupilR.setAttribute('cx', 262 + ox);
+    pupilR.setAttribute('cy', 182 + oy);
+  }
+
+  stage.addEventListener('mousemove', (ev) => {
+    const rect = stage.getBoundingClientRect();
+    const nx = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+    const ny = ((ev.clientY - rect.top) / rect.height) * 2 - 1;
+    targetX = Math.max(-1, Math.min(1, nx));
+    targetY = Math.max(-1, Math.min(1, ny));
+  });
+  stage.addEventListener('mouseleave', () => { targetX = 0; targetY = 0.1; });
+
+  // suaviza el movimiento de los ojos (natural, no instantáneo)
+  function animateEyes() {
+    curX += (targetX - curX) * 0.18;
+    curY += (targetY - curY) * 0.18;
+    moveEyesTo(curX, curY);
+    requestAnimationFrame(animateEyes);
+  }
+  animateEyes();
+
+  /* ---------- parpadeo natural ---------- */
+  function blinkOnce(cb) {
+    eyeL.classList.add('blink');
+    eyeR.classList.add('blink');
+    setTimeout(() => {
+      eyeL.classList.remove('blink');
+      eyeR.classList.remove('blink');
+      if (cb) cb();
+    }, 110);
+  }
+
+  function scheduleBlink() {
+    // intervalo aleatorio "humano": entre 2.2s y 6.5s
+    const delay = 2200 + Math.random() * 4300;
+    setTimeout(() => {
+      blinkOnce(() => {
+        // a veces doble parpadeo, como la gente real
+        if (Math.random() < 0.18) {
+          setTimeout(() => blinkOnce(), 160);
+        }
+      });
+      scheduleBlink();
+    }, delay);
+  }
+  scheduleBlink();
+
+  /* ---------- click / saludo ---------- */
+  let waveTimeout;
+  stage.addEventListener('click', () => {
+    clearTimeout(waveTimeout);
+    const prev = currentExpr;
+    applyExpression('happy');
+    blinkOnce();
+    waveTimeout = setTimeout(() => {
+      if (!cameraOn) applyExpression(prev === 'happy' ? 'neutral' : prev);
+    }, 1400);
+  });
+
+  /* ---------- reacción al azar (demo sin cámara) ---------- */
+  const names = Object.keys(EXPR);
+  demoBtn.addEventListener('click', () => {
+    if (cameraOn) return;
+    const pick = names[Math.floor(Math.random() * names.length)];
+    applyExpression(pick);
+    clearTimeout(demoBtn._t);
+    demoBtn._t = setTimeout(() => applyExpression('neutral'), 1800);
+  });
+
+  /* ---------- cámara + detección de expresión real ---------- */
+  let cameraOn = false;
+  let detectLoop = null;
+
+  async function startCamera() {
+    camBtn.disabled = true;
+    camBtn.textContent = 'Cargando modelos…';
+    try {
+      const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.15/model';
+      await Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+        faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
+      ]);
+
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 240, height: 180 } });
+      video.srcObject = stream;
+      await video.play();
+
+      camWrap.classList.add('on');
+      camBtn.textContent = '⏹️ Apagar cámara';
+      camBtn.disabled = false;
+      cameraOn = true;
+      hint.textContent = 'Copiando tu cara en tiempo real 🪞 — probá sonreír, abrir la boca o poner cara de sorpresa.';
+
+      const opts = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.4 });
+
+      detectLoop = setInterval(async () => {
+        if (!cameraOn) return;
+        try {
+          const result = await faceapi
+            .detectSingleFace(video, opts)
+            .withFaceExpressions();
+          if (result && result.expressions) {
+            const entries = Object.entries(result.expressions);
+            entries.sort((a, b) => b[1] - a[1]);
+            const [topName, topScore] = entries[0];
+            // umbral para no cambiar de cara por ruido menor
+            if (topScore > 0.45) {
+              const mapped = topName === 'happy' ? 'happy'
+                : topName === 'sad' ? 'sad'
+                : topName === 'angry' ? 'angry'
+                : topName === 'surprised' ? 'surprised'
+                : topName === 'disgusted' ? 'disgusted'
+                : topName === 'fearful' ? 'fearful'
+                : 'neutral';
+              if (mapped !== currentExpr) applyExpression(mapped);
+            }
+          }
+        } catch (err) {
+          // frame sin cara detectada, se ignora
+        }
+      }, 260);
+
+    } catch (err) {
+      console.error(err);
+      camBtn.disabled = false;
+      camBtn.textContent = '🎥 Activar cámara';
+      hint.textContent = 'No se pudo acceder a la cámara (permiso denegado o no disponible). Podés seguir jugando con el mouse y el botón de reacción al azar.';
+    }
+  }
+
+  function stopCamera() {
+    cameraOn = false;
+    if (detectLoop) clearInterval(detectLoop);
+    const stream = video.srcObject;
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    video.srcObject = null;
+    camWrap.classList.remove('on');
+    camBtn.textContent = '🎥 Activar cámara';
+    hint.textContent = 'Tip: con la cámara activada, sonreí, abrí la boca, hacé cara de sorpresa, enojo o tristeza — la carita azul te va a copiar en tiempo real.';
+    applyExpression('neutral');
+  }
+
+  camBtn.addEventListener('click', () => {
+    if (cameraOn) stopCamera();
+    else startCamera();
+  });
+
+  /* ---------- estado inicial ---------- */
+  applyExpression('neutral', { silent: true });
+})();
+</script>
+</body>
+</html>
